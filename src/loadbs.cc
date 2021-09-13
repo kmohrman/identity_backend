@@ -63,7 +63,8 @@ public:
   void Event();
   void setItAll(unsigned int iId,std::vector<std::string> const& esproducers,std::vector<std::string> runs);  
   void runToCompletion();
-  cms::cuda::host::unique_ptr<uint32_t[]> getOutput();
+  //cms::cuda::host::unique_ptr<uint32_t[]> getOutput();
+  uint32_t getOutput();
 
 private:
   std::string data_;
@@ -77,10 +78,10 @@ private:
   edmplugin::PluginManager fPluginManager;
   //SiPixelRawToClusterCUDA fSiPixelRawToClusterCUDA;
   edm::Source *fSource;
+  CountValidatorSimple* fOutput;
 };
 
 // explicit ~BSTest() { }
-
 void BSTest::readDummy(){
   std::string fileRaw="/models/identity_fp32/1/data/raw.bin";
   std::ifstream in_raw(fileRaw.c_str(), std::ios::binary);
@@ -139,6 +140,10 @@ void BSTest::setItAll(unsigned int iId,std::vector<std::string> const& esproduce
   }
   std::cout << "---> producers done adding stream " << std::endl;
   fStream.emplace_back(reg_,fPluginManager,fSource,&fSetup,iId,runs);
+  //fPluginManager.load("CountValidatorSimple");
+  //int modInd = 4;
+  //reg_.beginModuleConstruction(modInd);
+  //fOutput = new CountValidatorSimple(reg_);
 }
 void BSTest::runToCompletion() {
     // The task that waits for all other work
@@ -148,6 +153,8 @@ void BSTest::runToCompletion() {
       std::cout << " Running CMSSW 1 " <<std::endl;
       auto start = std::chrono::high_resolution_clock::now();
       auto pTask = edm::WaitingTaskHolder(globalWaitTask.get());
+      //s.processOneEvent2(globalWaitTask.get());
+      //s.processOneEventAsync(pTask);
       s.runToCompletionAsync(pTask);
       auto finish = std::chrono::high_resolution_clock::now();
       auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish-start);
@@ -158,24 +165,33 @@ void BSTest::runToCompletion() {
       std::rethrow_exception(*(globalWaitTask->exceptionPtr()));
     }
 }
-//void BSTest::fillSource() {
-//}
-
-cms::cuda::host::unique_ptr<uint32_t[]> BSTest::getOutput() {
-  cms::cuda::host::unique_ptr<uint32_t[]> out;
+void BSTest::fillSource(void* input_buffer) {
+  fSource->fill(input_buffer);
+}
+uint32_t* BSTest::getOutput() {
+  std::cout << "---> Test 0 " << std::endl;
+  std::cout << "---> Test 1 " << std::endl;
   auto globalWaitTask = edm::make_empty_waiting_task();
   globalWaitTask->increment_ref_count();
-  //for (auto& s : fStream) {
-  auto pTask = edm::WaitingTaskHolder(globalWaitTask.get());
-  out = fStream[0].processOneEvent(pTask);
-  //}
+  std::cout << "---> Test 2 " << std::endl;
+  uint32_t out = 0;
+  for (auto& s : fStream) {
+    std::cout << "---> Test 2-1 " << std::endl;
+    auto pTask = edm::WaitingTaskHolder(globalWaitTask.get());
+    s.runToCompletionAsync(pTask);
+  }
+  std::cout << "---> Test 3 " << std::endl;
   globalWaitTask->wait_for_all();
   if (globalWaitTask->exceptionPtr()) {
     std::rethrow_exception(*(globalWaitTask->exceptionPtr()));
   }
-  return out;
+  std::cout << "---> Test 4 " << std::endl;
+  auto eventPtr = fSource->lastEvent_.get();
+  std::cout << "---- XXXX --- " <<  eventPtr->eventID() << std::endl;
+  uint32_t* output = fStream[0].fOutput->produce(*eventPtr,fSetup);
+  std::cout << " -- " << fStream[0].fOutput->getOutput() << std::endl;
+  return output;
 }
-
 /*
 oid SiPixelRecHitCUDA::produce(edm::Event& iEvent, const edm::EventSetup& es) {
   PixelCPEFast const& fcpe = es.get<PixelCPEFast>();

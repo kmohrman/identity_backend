@@ -7,6 +7,7 @@
 
 #include "Framework/ProductRegistry.h"
 #include "Framework/WaitingTaskHolder.h"
+#include "plugin-Validation/CountValidatorSimple.cc"
 
 namespace edmplugin {
   class PluginManager;
@@ -36,10 +37,13 @@ namespace edm {
     void runToCompletionAsync(WaitingTaskHolder h);
 
     void endJob();
-    cms::cuda::host::unique_ptr<uint32_t[]> processOneEvent(WaitingTaskHolder h);
+    void processOneEvent2(WaitingTask *h);
+    uint32_t processOneEvent(WaitingTaskHolder h);
+    //uint32_t processOneEvent(WaitingTaskHolder h);
+    void processOneEventAsync(WaitingTaskHolder h);
+    CountValidatorSimple* fOutput;
     
   private:
-    void processOneEventAsync(WaitingTaskHolder h);
 
     ProductRegistry registry_;
     Source* source_;

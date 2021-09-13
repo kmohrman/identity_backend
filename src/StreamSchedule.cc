@@ -18,7 +18,8 @@ namespace edm {
                                  EventSetup const* eventSetup,
                                  int streamId,
                                  std::vector<std::string> const& path)
-    : registry_(std::move(reg)), source_(source), eventSetup_(eventSetup), streamId_(streamId) {
+    : registry_(std::move(reg)), source_(source), eventSetup_(eventSetup), streamId_(streamId)
+   {
     path_.reserve(path.size());
     int modInd = 1;
     for (auto const& name : path) {
@@ -36,6 +37,18 @@ namespace edm {
       path_.back()->setItemsToGet(std::move(consumes));
       ++modInd;
     }
+    std::cout << "---> " << modInd << std::endl;
+    pluginManager.load("CountValidatorSimple");
+    registry_.beginModuleConstruction(modInd);
+    fOutput = new CountValidatorSimple(registry_);
+    //std::vector<Worker*> consumes;
+    //for (unsigned int depInd : registry_.consumedModules()) {
+    //  if (depInd != ProductRegistry::kSourceIndex) {
+    //	std::cout << "module " << modInd << " depends on " << (depInd-1) << " " << path_[depInd-1].get() << std::endl;
+    //	consumes.push_back(path_[depInd - 1].get());
+    //      }
+    //}
+    //fOutput->setItemsToGet(std::move(consumes));
   }
 
   StreamSchedule::~StreamSchedule() = default;
@@ -53,7 +66,9 @@ namespace edm {
   }
 
   void StreamSchedule::processOneEventAsync(WaitingTaskHolder h) {
+    std::cout << "---> stream Process " << std::endl;
     auto event = source_->produce(streamId_, registry_);
+    std::cout << "---> event done " << std::endl;
     if (event) {
       // Pass the event object ownership to the "end-of-event" task
       // Pass a non-owning pointer to the event to preceding tasks
@@ -78,7 +93,7 @@ namespace edm {
       auto nextEventTaskHolder = WaitingTaskHolder(nextEventTask);
 
       for (auto iWorker = path_.rbegin(); iWorker != path_.rend(); ++iWorker) {
-        //std::cout << "calling doWorkAsync for " << iWorker->get() << " with nextEventTask " << nextEventTask << std::endl;
+        std::cout << "calling doWorkAsync for " << iWorker->get() << " with nextEventTask " << nextEventTask << " -- " << eventPtr << std::endl;
         (*iWorker)->doWorkAsync(*eventPtr, *eventSetup_, nextEventTask);
       }
     } else {
@@ -86,8 +101,75 @@ namespace edm {
     }
   }
 
+  void StreamSchedule::processOneEvent2(WaitingTask* h) {
+    std::cout << "---> stream Process " << std::endl;
+    auto event = source_->produce(streamId_, registry_);
+    std::cout << "---> event done " << std::endl;
+    if (event) {
+      auto eventPtr = event.get();
+      //auto nextEventTaskHolder = WaitingTaskHolder(nextEventTask);
+      for (auto iWorker = path_.rbegin(); iWorker != path_.rend(); ++iWorker) {
+        std::cout << "calling doWorkAsync for " << iWorker->get() << " with nextEventTask " << h << std::endl;
+        (*iWorker)->doWorkAsync(*eventPtr, *eventSetup_, h);
+      }
+    }
+    else {
+      //h->dependentTaskFailed(std::exception_ptr{});
+      auto task = h;
+      h = nullptr;
+      if (0 == task->decrement_ref_count()) {
+        tbb::task::spawn(*task);
+      }
+    }
+  }
+  
+  uint32_t StreamSchedule::processOneEvent(WaitingTaskHolder h) {
+    auto event = source_->produce(streamId_, registry_);
+    if (event) {
+      // Pass the event object ownership to the "end-of-event" task
+      // Pass a non-owning pointer to the event to preceding tasks
+      //std::cout << "Begin processing event " << event->eventID() << std::endl;
+      auto eventPtr = event.get();
+      auto nextEventTask =
+          make_waiting_task(tbb::task::allocate_root(),
+                            [this, h = std::move(h), ev = std::move(event)](std::exception_ptr const* iPtr) mutable {
+                              ev.reset();
+                              if (iPtr) {
+                                h.doneWaiting(*iPtr);
+                              } else {
+                                for (auto const& worker : path_) {
+                                  worker->reset();
+                                }
+                                processOneEventAsync(std::move(h));
+                              }
+                            });
+      // To guarantee that the nextEventTask is spawned also in
+      // absence of Workers, and also to prevent spawning it before
+      // all workers have been processed (should not happen though)
+      auto nextEventTaskHolder = WaitingTaskHolder(nextEventTask);
+      for (auto iWorker = path_.rbegin(); iWorker != path_.rend(); ++iWorker) {
+        std::cout << "calling doWorkAsync for " << iWorker->get() << " with nextEventTask " << nextEventTask << std::endl;
+        (*iWorker)->doWorkAsync(*eventPtr, *eventSetup_, nextEventTask);
+      }
+    } else {
+      h.doneWaiting(std::exception_ptr{});
+      uint32_t out = 0;
+      return out;
+    }
+    std::cout << "output9 " << std::endl;
+    //auto eventPtr = event.get();
+    std::cout << "output1 " << std::endl;
+    //fOutput->produce(*eventPtr, *eventSetup_);
+    std::cout << "output2 " << std::endl;
+    uint32_t  output = 0;//fOutput->getOutput();
+    std::cout << "output3 " << std::endl;
+    return output;
+  }
 
+  /*
   cms::cuda::host::unique_ptr<uint32_t[]> StreamSchedule::processOneEvent(WaitingTaskHolder h) {
+    edm::EDGetTokenT<cms::cuda::Product<SiPixelDigisCUDA>> digiToken_(registry_.consumes<cms::cuda::Product<SiPixelDigisCUDA>>());
+    edm::EDGetTokenT<cms::cuda::Product<SiPixelClustersCUDA>> clusterToken_(registry_.consumes<cms::cuda::Product<SiPixelClustersCUDA>>());
     auto event = source_->produce(streamId_, registry_);
     if (event) {
       // Pass the event object ownership to the "end-of-event" task
@@ -114,19 +196,21 @@ namespace edm {
       //auto nextEventTaskHolder = WaitingTaskHolder(nextEventTask);
 
       for (auto iWorker = path_.rbegin(); iWorker != path_.rend(); ++iWorker) {
-        //std::cout << "calling doWorkAsync for " << iWorker->get() << " with nextEventTask " << nextEventTask << std::endl;
+        std::cout << "calling doWorkAsync for " << iWorker->get() << " with nextEventTask " << nextEventTask << std::endl;
         (*iWorker)->doWorkAsync(*eventPtr, *eventSetup_, nextEventTask);
       }
-      edm::EDGetTokenT<cms::cuda::Product<SiPixelDigisCUDA>> digiToken_(registry_.consumes<cms::cuda::Product<SiPixelDigisCUDA>>());
-      edm::EDGetTokenT<cms::cuda::Product<SiPixelClustersCUDA>> clusterToken_(registry_.consumes<cms::cuda::Product<SiPixelClustersCUDA>>());
-
+      std::cout << " --> getting Digis 1 " << std::endl;
       auto const& pdigis = eventPtr->get(digiToken_);
-      cms::cuda::ScopedContextAcquire ctx{pdigis, std::move(nextEventTaskHolder)};
-      
+      std::cout << " --> getting Digis 1.5 " << std::endl;
+      cms::cuda::ScopedContextProduce ctx{pdigis};
+      //cms::cuda::ScopedContextAcquire ctx{pdigis, std::move(nextEventTaskHolder)};
+      std::cout << " --> getting Digis 2 " << std::endl;
       auto const& digis = ctx.get(*eventPtr, digiToken_);
-      
+      std::cout << " --> getting Digis 3 " << std::endl;      
       auto const& clusters = ctx.get(*eventPtr, clusterToken_);
+      std::cout << " --> getting Cluster " << std::endl;      
       uint32_t nModules = digis.nModules();
+      std::cout << "---> " << nModules << std::endl;
       cms::cuda::host::unique_ptr<uint32_t[]> h_clusInModule = cms::cuda::make_host_unique<uint32_t[]>(nModules, ctx.stream());
       cudaCheck(cudaMemcpyAsync(
 				h_clusInModule.get(), clusters.clusInModule(), sizeof(uint32_t) * nModules, cudaMemcpyDefault, ctx.stream()));
@@ -137,7 +221,7 @@ namespace edm {
       return h_clusInModule;
     }
   }
-
+  */
   void StreamSchedule::endJob() {
     for (auto& w : path_) {
       w->doEndJob();

@@ -18,11 +18,14 @@ namespace edm {
 
     void fill_fromstream(int streamId, ProductRegistry const &reg,char* iRaw);
     // thread safe
-    std::unique_ptr<Event> produce(int streamId, ProductRegistry const& reg);
+    std::shared_ptr<Event> produce(int streamId, ProductRegistry const& reg);
+    std::shared_ptr<Event> lastEvent_;
 
   private:
     int maxEvents_;
     std::atomic<int> numEvents_;
+    int iterEvents_;
+    std::atomic<int> fBase_;
     unsigned int fNFeds;
     EDPutTokenT<FEDRawDataCollection> const rawToken_;
     std::vector<FEDRawDataCollection> raw_;
