@@ -37,7 +37,6 @@ namespace edm {
       path_.back()->setItemsToGet(std::move(consumes));
       ++modInd;
     }
-    std::cout << "---> " << modInd << std::endl;
     pluginManager.load("CountValidatorSimple");
     registry_.beginModuleConstruction(modInd);
     fOutput = new CountValidatorSimple(registry_);
@@ -66,9 +65,7 @@ namespace edm {
   }
 
   void StreamSchedule::processOneEventAsync(WaitingTaskHolder h) {
-    std::cout << "---> stream Process " << std::endl;
     auto event = source_->produce(streamId_, registry_);
-    std::cout << "---> event done " << std::endl;
     if (event) {
       // Pass the event object ownership to the "end-of-event" task
       // Pass a non-owning pointer to the event to preceding tasks
@@ -102,9 +99,7 @@ namespace edm {
   }
 
   void StreamSchedule::processOneEvent2(WaitingTask* h) {
-    std::cout << "---> stream Process " << std::endl;
     auto event = source_->produce(streamId_, registry_);
-    std::cout << "---> event done " << std::endl;
     if (event) {
       auto eventPtr = event.get();
       //auto nextEventTaskHolder = WaitingTaskHolder(nextEventTask);
@@ -156,13 +151,9 @@ namespace edm {
       uint32_t out = 0;
       return out;
     }
-    std::cout << "output9 " << std::endl;
     //auto eventPtr = event.get();
-    std::cout << "output1 " << std::endl;
     //fOutput->produce(*eventPtr, *eventSetup_);
-    std::cout << "output2 " << std::endl;
     uint32_t  output = 0;//fOutput->getOutput();
-    std::cout << "output3 " << std::endl;
     return output;
   }
 

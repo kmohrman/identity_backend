@@ -232,7 +232,7 @@ ModelState::ValidateModelConfig()
   std::string input_dtype, output_dtype;
   RETURN_IF_ERROR(input.MemberAsString("data_type", &input_dtype));
   RETURN_IF_ERROR(output.MemberAsString("data_type", &output_dtype));
-
+  /*
   RETURN_ERROR_IF_FALSE(
       input_dtype == output_dtype, TRITONSERVER_ERROR_INVALID_ARG,
       std::string("expected input and output datatype to match, got ") +
@@ -248,7 +248,7 @@ ModelState::ValidateModelConfig()
       std::string("expected input and output shape to match, got ") +
           backend::ShapeToString(input_shape) + " and " +
           backend::ShapeToString(output_shape));
-
+  */
   return nullptr;  // success
 }
 
@@ -544,14 +544,13 @@ TRITONBACKEND_ModelInstanceInitialize(TRITONBACKEND_ModelInstance* instance)
 
   std::cout << "---> Setting up " << std::endl;
   fBSTest = new BSTest("data/beamspot.bin");
-  std::cout << " --> setup " << std::endl;
   std::vector<std::string> lESModules;
   std::vector<std::string> lEDModules;
   lESModules = {"BeamSpotESProducer",
 		"SiPixelFedCablingMapGPUWrapperESProducer",
   		"SiPixelGainCalibrationForHLTGPUESProducer",
   		"PixelCPEFastESProducer"};
-  lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA"};//,"CountValidatorSimple"};
+  lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA", "CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA","CountValidatorSimple"};
   fBSTest->setItAll(0,lESModules,lEDModules);
   std::cout << "---> Setting up ---> Done " << std::endl;
   
@@ -749,6 +748,26 @@ TRITONBACKEND_ModelInstanceExecute(
       continue;
     }
 
+    const void* input_buffer = nullptr;
+    uint64_t buffer_byte_size = 0;
+    TRITONSERVER_MemoryType input_memory_type = TRITONSERVER_MEMORY_CPU;
+    int64_t input_memory_type_id = 0;
+    GUARDED_RESPOND_IF_ERROR(
+			     responses, r,
+			     TRITONBACKEND_InputBuffer(
+						       input, 0, &input_buffer, &buffer_byte_size, &input_memory_type,
+						       &input_memory_type_id));
+    if ((responses[r] == nullptr) ||
+	(input_memory_type == TRITONSERVER_MEMORY_GPU)) {
+      GUARDED_RESPOND_IF_ERROR(
+			       responses, r,
+			       TRITONSERVER_ErrorNew(
+						     TRITONSERVER_ERROR_UNSUPPORTED,
+						     "failed to get input buffer in CPU memory"));
+    }
+    std::cout << "filling Source " << input_buffer << " -- " << buffer_byte_size  << " -- " << input_memory_type_id << std::endl;
+    fBSTest->fillSource(input_buffer);
+    
     LOG_MESSAGE(
         TRITONSERVER_LOG_INFO,
         (std::string("\tinput ") + input_name +
@@ -807,12 +826,20 @@ TRITONBACKEND_ModelInstanceExecute(
       // memory but we have to handle any returned type. If we get
       // back a buffer in GPU memory we just fail the request.
       void* output_buffer;
+      void* output_tmp = fBSTest->getOutput();
+      uint64_t buffer_byte_size = 300000*4;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
+      uint32_t nDigi0 = reinterpret_cast<uint32_t*>(output_tmp)[0];
+      uint32_t nDigi1 = reinterpret_cast<uint32_t*>(output_tmp)[1];
+      std::cout << " XXX buff ----> " << buffer_byte_size << " -- " << nDigi0 << " -- " << nDigi1 << std::endl;
+      //memcpy(reinterpret_cast<uint32_t*>(output_buffer),// size_t output_buffer_offset = 0;
+      //output_test, buffer_byte_size);
+      //memcpy(output_buffer,reinterpret_cast<void*>(output_test), 10);//buffer_byte_size);
       TRITONSERVER_MemoryType output_memory_type = TRITONSERVER_MEMORY_CPU;
       int64_t output_memory_type_id = 0;
       GUARDED_RESPOND_IF_ERROR(
           responses, r,
           TRITONBACKEND_OutputBuffer(
-              output, &output_buffer, input_byte_size, &output_memory_type,
+              output, &output_buffer, buffer_byte_size, &output_memory_type,
               &output_memory_type_id));
       if ((responses[r] == nullptr) ||
           (output_memory_type == TRITONSERVER_MEMORY_GPU)) {
@@ -829,10 +856,14 @@ TRITONBACKEND_ModelInstanceExecute(
                 .c_str());
         continue;
       }
-
+      std::cout << "---> memcpy" << std::endl;
+      memcpy(output_buffer,output_tmp,nDigi0*16);
+      std::cout << "---> memcpy Done" << std::endl;
+      std::cout << " ---> " << reinterpret_cast<uint32_t*>(output_buffer)[0] << std::endl;
       // Step 3. Copy input -> output. We can only handle if the input
       // buffers are on CPU so fail otherwise.
-      size_t output_buffer_offset = 0;
+      //size_t output_buffer_offset = 0;
+      /*
       for (uint32_t b = 0; b < input_buffer_count; ++b) {
         const void* input_buffer = nullptr;
         uint64_t buffer_byte_size = 0;
@@ -851,26 +882,30 @@ TRITONBACKEND_ModelInstanceExecute(
                   TRITONSERVER_ERROR_UNSUPPORTED,
                   "failed to get input buffer in CPU memory"));
         }
-	//BSTest pTmp("data/beamspot.bin");
+	std::cout << "--> 3 " << std::endl;
+     	//BSTest pTmp("data/beamspot.bin");
 	//pTmp.loadBS(0);
 	//pTmp.readDummy();
 	//pTmp.Event();
-	fBSTest->runToCompletion();
+	//fBSTest->runToCompletion();
 
 	//fBSTest->fillSource(input_buffer,buffer_byte_size);
 	//uint32_t* output_test = fBSTest->getOutput();
+	//std::cout << "---> Done " <<  std::endl;
 	//buffer_byte_size = output_test[0]*4*sizeof(uint32_t); 
-	float* input_test = (float*)(input_buffer);
-	float* output_test = new float[(input_shape[0])];
+	//std::cout << "--> " << output_test[0] << std::endl;
+	//float* input_test = (float*)(input_buffer);
+	//float* output_test = new float[(input_shape[0])];
 	//input_test[0] += (float) pTest;
-	vector_add(output_test,input_test,input_test,(input_shape[0]));
-	
-        memcpy(
-	       reinterpret_cast<char*>(output_buffer) + output_buffer_offset,
-            output_test, buffer_byte_size);
+	//vector_add(output_test,input_test,input_test,(input_shape[0]));
+	//std::cout << "----> filling array " << std::endl;
+        //memcpy(
+	//       reinterpret_cast<char*>(output_buffer) + output_buffer_offset,
+        //    output_test, buffer_byte_size);
         output_buffer_offset += buffer_byte_size;
       }
-
+      */
+      std::cout << "----> filling array Done " << std::endl;
       if (responses[r] == nullptr) {
         LOG_MESSAGE(
             TRITONSERVER_LOG_ERROR,
@@ -881,22 +916,6 @@ TRITONBACKEND_ModelInstanceExecute(
         continue;
       }
     }
-
-    // To demonstrate response parameters we attach some here. Most
-    // responses do not use parameters but they provide a way for
-    // backends to communicate arbitrary information along with the
-    // response.
-    LOG_IF_ERROR(
-        TRITONBACKEND_ResponseSetStringParameter(
-            responses[r], "param0", "an example string parameter"),
-        "failed setting string parameter");
-    LOG_IF_ERROR(
-        TRITONBACKEND_ResponseSetIntParameter(responses[r], "param1", 42),
-        "failed setting integer parameter");
-    LOG_IF_ERROR(
-        TRITONBACKEND_ResponseSetBoolParameter(responses[r], "param2", false),
-        "failed setting boolean parameter");
-
     // If we get to this point then there hasn't been any error and
     // the response is complete and we can send it. This is the last
     // (and only) response that we are sending for the request so we
@@ -921,7 +940,6 @@ TRITONBACKEND_ModelInstanceExecute(
             exec_start_ns, exec_start_ns, exec_end_ns, exec_end_ns),
         "failed reporting request statistics");
   }
-
   // Done with requests...
 
   // There are two types of statistics that we can report... the
@@ -961,7 +979,6 @@ TRITONBACKEND_ModelInstanceExecute(
         TRITONBACKEND_RequestRelease(request, TRITONSERVER_REQUEST_RELEASE_ALL),
         "failed releasing request");
   }
-
   return nullptr;  // success
 }
 

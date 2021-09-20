@@ -16,21 +16,22 @@ namespace {
       is.read(reinterpret_cast<char *>(&fedSize), sizeof(unsigned int));
       FEDRawData &rawData = rawCollection.FEDData(fedId);
       rawData.resize(fedSize);
-      std::cout << "----> Fed " << fedId << " -- " << fedSize << " -- " << std::endl;
       is.read(reinterpret_cast<char *>(rawData.data()), fedSize);
     }
     return rawCollection;
   }
 
-  FEDRawDataCollection readRawBuff(void* input_buffer, unsigned int nfeds) {
+  FEDRawDataCollection readRawBuff(const void* input_buffer, unsigned int nfeds) {
     FEDRawDataCollection rawCollection;
     unsigned iter = 0; 
+    const uint32_t * test_buffer = reinterpret_cast<const uint32_t *>(input_buffer);
     for (unsigned int ifed = 0; ifed < nfeds; ++ifed) {
-      unsigned int fedId   = (unsigned int) input_buffer[iter];
-      unsigned int fedSize = (unsigned int) input_buffer[iter+1];
+      unsigned int fedId   = (unsigned int) test_buffer[iter+1];
+      unsigned int fedSize = (unsigned int) test_buffer[iter+2];
       FEDRawData &rawData = rawCollection.FEDData(fedId);
-      rawData.resize(fedSize);
-      std::memcpy(rawData.data(),input_buffer[iter+2],fedSize);
+      rawData.resize(fedSize*4);
+      std::cout << "----> Fed " << fedId << " -- " << fedSize << " -- " << std::endl;
+      std::memcpy(rawData.data(),&(test_buffer[iter+3]),fedSize*4);
       iter += fedSize;
     }
     return rawCollection;
@@ -41,13 +42,13 @@ namespace {
 namespace edm {
   Source::Source(int maxEvents, ProductRegistry &reg, std::string const &datadir)
     : maxEvents_(maxEvents), numEvents_(0), iterEvents_(1),fBase_(0), rawToken_(reg.produces<FEDRawDataCollection>()) {
-    std::cout << "---> source " << datadir << std::endl;
     std::ifstream in_raw((datadir + "/raw.bin").c_str(), std::ios::binary);
 
     unsigned int nfeds;
     in_raw.exceptions(std::ifstream::badbit);
     in_raw.read(reinterpret_cast<char *>(&nfeds), sizeof(unsigned int));
     std::cout << "---> N feds " << nfeds << " -- " << datadir << std::endl;
+    /*
     while (not in_raw.eof()) {
       in_raw.exceptions(std::ifstream::badbit | std::ifstream::failbit | std::ifstream::eofbit);
       raw_.emplace_back(readRaw(in_raw, nfeds));
@@ -56,7 +57,9 @@ namespace edm {
       in_raw.exceptions(std::ifstream::badbit);
       in_raw.read(reinterpret_cast<char *>(&nfeds), sizeof(unsigned int));
     }
-    fNFeds = nfeds;
+    */
+    //fNFeds = nfeds;
+    fNFeds = 1;
     if (maxEvents_ < 0) {
       maxEvents_ = raw_.size();
     }
@@ -77,8 +80,8 @@ namespace edm {
     return lastEvent_;
   }
 
-  void  Source::fill(void* input_buffer)  {  
-    raw_.pop_back();
+  void  Source::fill(const void* input_buffer)  {
+    if(raw_.size() > 0) raw_.pop_back();
     raw_.emplace_back(readRawBuff(input_buffer,fNFeds));
   }
   /*

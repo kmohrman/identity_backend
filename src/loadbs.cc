@@ -55,7 +55,6 @@ public:
 						bsHost{cms::cuda::make_host_noncached_unique<BeamSpotPOD>(cudaHostAllocWriteCombined)} {
   						//fEvent(0,0,reg_),
 						//fSiPixelRawToClusterCUDA(reg_) {
-						  std::cout << "---BS " << std::endl;
 						  fEvent = std::make_unique<edm::Event>(0, 0, reg_);
 						}
   void loadBS(int iId);//edm::EventSetup& eventSetup);
@@ -64,7 +63,8 @@ public:
   void setItAll(unsigned int iId,std::vector<std::string> const& esproducers,std::vector<std::string> runs);  
   void runToCompletion();
   //cms::cuda::host::unique_ptr<uint32_t[]> getOutput();
-  uint32_t getOutput();
+  void* getOutput();
+  void fillSource(const void* input_buffer);
 
 private:
   std::string data_;
@@ -88,7 +88,6 @@ void BSTest::readDummy(){
   unsigned int nfeds;
   in_raw.exceptions(std::ifstream::badbit);
   in_raw.read(reinterpret_cast<char *>(&nfeds), sizeof(unsigned int)); 
-  std::cout << "---> nfeds " << nfeds << std::endl;
   while (not in_raw.eof()) {
     in_raw.exceptions(std::ifstream::badbit | std::ifstream::failbit | std::ifstream::eofbit);
     raw_.emplace_back(readRaw(in_raw, nfeds));
@@ -102,12 +101,10 @@ void BSTest::loadBS(int iId){ //,void* iContainer) {
   std::ifstream in(file.c_str(), std::ios::binary);
   in.exceptions(std::ifstream::badbit | std::ifstream::failbit | std::ifstream::eofbit);
   in.read(reinterpret_cast<char*>(bs.get()), sizeof(BeamSpotPOD));
-  std::cout << "---> loading file Done" << std::endl;
   //bsHost = bs;
   //bsHost = static_cast<cms::cuda::host::noncached::unique_ptr<BeamSpotPOD> >(bs);
   fSetup.put(std::move(bs));
   *bsHost = fSetup.get<BeamSpotPOD>();
-  std::cout << "---> loading file Done 2" << std::endl;
   //auto bsHost2 = std::move(bs);
   //bsHost = *(dynamic_cast<cms::cuda::host::noncached::unique_ptr<BeamSpotPOD> >(std::move(bs)));
   cms::cuda::ScopedContextProduce ctx{iId};
@@ -127,18 +124,15 @@ void BSTest::Event() {
 void BSTest::setItAll(unsigned int iId,std::vector<std::string> const& esproducers,std::vector<std::string> runs) { 
   std::string datadir = "/models/identity_fp32/1/data";
   std::cout << "---> loading data " << std::endl;
-  fSource = new edm::Source(10, reg_, datadir);
+  fSource = new edm::Source(1, reg_, datadir);
   std::cout << "---> loading data done " << std::endl;
   for (auto const& name : esproducers) {
     std::cout << "---> filling producers " << std::endl;
     fPluginManager.load(name);
-    std::cout << "---> Done Loading " << std::endl;
     //std::filesystem::path datadir = "/models/identity_fp32/1/data";
     auto esp = edm::ESPluginFactory::create(name, datadir);
-    std::cout << "---> filling producers factory" << std::endl;
     esp->produce(fSetup);
   }
-  std::cout << "---> producers done adding stream " << std::endl;
   fStream.emplace_back(reg_,fPluginManager,fSource,&fSetup,iId,runs);
   //fPluginManager.load("CountValidatorSimple");
   //int modInd = 4;
@@ -165,32 +159,29 @@ void BSTest::runToCompletion() {
       std::rethrow_exception(*(globalWaitTask->exceptionPtr()));
     }
 }
-void BSTest::fillSource(void* input_buffer) {
+void BSTest::fillSource(const void* input_buffer) {
   fSource->fill(input_buffer);
 }
-uint32_t* BSTest::getOutput() {
+void* BSTest::getOutput() { 
   std::cout << "---> Test 0 " << std::endl;
-  std::cout << "---> Test 1 " << std::endl;
   auto globalWaitTask = edm::make_empty_waiting_task();
   globalWaitTask->increment_ref_count();
-  std::cout << "---> Test 2 " << std::endl;
-  uint32_t out = 0;
   for (auto& s : fStream) {
-    std::cout << "---> Test 2-1 " << std::endl;
     auto pTask = edm::WaitingTaskHolder(globalWaitTask.get());
     s.runToCompletionAsync(pTask);
   }
-  std::cout << "---> Test 3 " << std::endl;
   globalWaitTask->wait_for_all();
   if (globalWaitTask->exceptionPtr()) {
     std::rethrow_exception(*(globalWaitTask->exceptionPtr()));
   }
   std::cout << "---> Test 4 " << std::endl;
   auto eventPtr = fSource->lastEvent_.get();
-  std::cout << "---- XXXX --- " <<  eventPtr->eventID() << std::endl;
-  uint32_t* output = fStream[0].fOutput->produce(*eventPtr,fSetup);
-  std::cout << " -- " << fStream[0].fOutput->getOutput() << std::endl;
-  return output;
+  std::cout << "---- Event ID --- " <<  eventPtr->eventID() << std::endl;
+  fStream[0].fOutput->produce(*eventPtr,fSetup);
+  std::cout << "---- Event ID ---  done " <<  std::endl;
+  void* iInput = reinterpret_cast<void*>(fStream[0].fOutput->getOutput());
+  std::cout << "---> Test 5 " << std::endl;
+  return iInput;
 }
 /*
 oid SiPixelRecHitCUDA::produce(edm::Event& iEvent, const edm::EventSetup& es) {
