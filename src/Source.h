@@ -19,7 +19,7 @@ namespace edm {
     void fill_fromstream(int streamId, ProductRegistry const &reg,char* iRaw);
     // thread safe
     std::shared_ptr<Event> produce(int streamId, ProductRegistry const& reg);
-    void  fill(const void* input_buffer);
+    void  fill(const void* input_buffer,bool iClear);
     std::shared_ptr<Event> lastEvent_;
 
   private:

@@ -28,7 +28,7 @@
 #include <thread>
 #include "triton/backend/backend_common.h"
 #include "loadbs.cc"
-#include "vector_add.cu"
+//#include "vector_add.cu"
 
 BSTest* fBSTest;
 
@@ -542,7 +542,6 @@ TRITONBACKEND_ModelInstanceInitialize(TRITONBACKEND_ModelInstance* instance)
       TRITONSERVER_ERROR_INVALID_ARG,
       std::string("'identity' backend only supports CPU instances"));
 
-  std::cout << "---> Setting up " << std::endl;
   fBSTest = new BSTest("data/beamspot.bin");
   std::vector<std::string> lESModules;
   std::vector<std::string> lEDModules;
@@ -550,9 +549,8 @@ TRITONBACKEND_ModelInstanceInitialize(TRITONBACKEND_ModelInstance* instance)
 		"SiPixelFedCablingMapGPUWrapperESProducer",
   		"SiPixelGainCalibrationForHLTGPUESProducer",
   		"PixelCPEFastESProducer"};
-  lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA", "CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA","CountValidatorSimple"};
+  lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA", "CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA"};//,"CountValidatorSimple"};
   fBSTest->setItAll(0,lESModules,lEDModules);
-  std::cout << "---> Setting up ---> Done " << std::endl;
   
   return nullptr;  // success
 }
@@ -601,12 +599,12 @@ TRITONBACKEND_ModelInstanceExecute(
   // from this function so that it is again available to be used for
   // another call to TRITONBACKEND_ModelInstanceExecute.
 
-  LOG_MESSAGE(
-      TRITONSERVER_LOG_INFO,
-      (std::string("model ") + model_state->Name() + ", instance " +
-       instance_state->Name() + ", executing " + std::to_string(request_count) +
-       " requests")
-          .c_str());
+  //  LOG_MESSAGE(
+  //    TRITONSERVER_LOG_INFO,
+  //    (std::string("model ") + model_state->Name() + ", instance " +
+  //     instance_state->Name() + ", executing " + std::to_string(request_count) +
+  //     " requests")
+  //        .c_str());
 
   bool supports_batching = false;
   RETURN_IF_ERROR(model_state->SupportsFirstDimBatching(&supports_batching));
@@ -688,13 +686,13 @@ TRITONBACKEND_ModelInstanceExecute(
       continue;
     }
 
-    LOG_MESSAGE(
-        TRITONSERVER_LOG_INFO,
-        (std::string("request ") + std::to_string(r) + ": id = \"" +
-         request_id + "\", correlation_id = " + std::to_string(correlation_id) +
-         ", input_count = " + std::to_string(input_count) +
-         ", requested_output_count = " + std::to_string(requested_output_count))
-            .c_str());
+    //LOG_MESSAGE(
+    //    TRITONSERVER_LOG_INFO,
+    //    (std::string("request ") + std::to_string(r) + ": id = \"" +
+    //     request_id + "\", correlation_id = " + std::to_string(correlation_id) +
+    //     ", input_count = " + std::to_string(input_count) +
+    //     ", requested_output_count = " + std::to_string(requested_output_count))
+    //        .c_str());
 
     const char* input_name;
     GUARDED_RESPOND_IF_ERROR(
@@ -765,20 +763,21 @@ TRITONBACKEND_ModelInstanceExecute(
 						     TRITONSERVER_ERROR_UNSUPPORTED,
 						     "failed to get input buffer in CPU memory"));
     }
-    std::cout << "filling Source " << input_buffer << " -- " << buffer_byte_size  << " -- " << input_memory_type_id << std::endl;
-    fBSTest->fillSource(input_buffer);
+    //std::cout << "filling Source " << input_buffer << " -- " << buffer_byte_size  << " -- " << input_shape[0] << std::endl;
+    fBSTest->fillSource(input_buffer,true);
+    for(unsigned int i0 = 1; i0 < input_shape[0]; i0++) fBSTest->fillSource(input_buffer,false);
     
-    LOG_MESSAGE(
-        TRITONSERVER_LOG_INFO,
-        (std::string("\tinput ") + input_name +
-         ": datatype = " + TRITONSERVER_DataTypeString(input_datatype) +
-         ", shape = " + backend::ShapeToString(input_shape, input_dims_count) +
-         ", byte_size = " + std::to_string(input_byte_size) +
-         ", buffer_count = " + std::to_string(input_buffer_count))
-            .c_str());
-    LOG_MESSAGE(
-        TRITONSERVER_LOG_INFO,
-        (std::string("\trequested_output ") + requested_output_name).c_str());
+    //LOG_MESSAGE(
+    //    TRITONSERVER_LOG_INFO,
+    //    (std::string("\tinput ") + input_name +
+    //     ": datatype = " + TRITONSERVER_DataTypeString(input_datatype) +
+    //     ", shape = " + backend::ShapeToString(input_shape, input_dims_count) +
+    //     ", byte_size = " + std::to_string(input_byte_size) +
+    //     ", buffer_count = " + std::to_string(input_buffer_count))
+    //        .c_str());
+    //LOG_MESSAGE(
+    //    TRITONSERVER_LOG_INFO,
+    //    (std::string("\trequested_output ") + requested_output_name).c_str());
 
     // For statistics we need to collect the total batch size of all
     // the requests. If the model doesn't support batching then each
@@ -827,10 +826,10 @@ TRITONBACKEND_ModelInstanceExecute(
       // back a buffer in GPU memory we just fail the request.
       void* output_buffer;
       void* output_tmp = fBSTest->getOutput();
-      uint64_t buffer_byte_size = 300000*4;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
+      uint64_t buffer_byte_size = 800000;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
       uint32_t nDigi0 = reinterpret_cast<uint32_t*>(output_tmp)[0];
-      uint32_t nDigi1 = reinterpret_cast<uint32_t*>(output_tmp)[1];
-      std::cout << " XXX buff ----> " << buffer_byte_size << " -- " << nDigi0 << " -- " << nDigi1 << std::endl;
+      //uint32_t nDigi1 = reinterpret_cast<uint32_t*>(output_tmp)[1];
+      //std::cout << " XXX buff ----> " << buffer_byte_size << " -- " << nDigi0 << " -- " << nDigi1 << std::endl;
       //memcpy(reinterpret_cast<uint32_t*>(output_buffer),// size_t output_buffer_offset = 0;
       //output_test, buffer_byte_size);
       //memcpy(output_buffer,reinterpret_cast<void*>(output_test), 10);//buffer_byte_size);
@@ -856,10 +855,7 @@ TRITONBACKEND_ModelInstanceExecute(
                 .c_str());
         continue;
       }
-      std::cout << "---> memcpy" << std::endl;
       memcpy(output_buffer,output_tmp,nDigi0*16);
-      std::cout << "---> memcpy Done" << std::endl;
-      std::cout << " ---> " << reinterpret_cast<uint32_t*>(output_buffer)[0] << std::endl;
       // Step 3. Copy input -> output. We can only handle if the input
       // buffers are on CPU so fail otherwise.
       //size_t output_buffer_offset = 0;
@@ -905,7 +901,6 @@ TRITONBACKEND_ModelInstanceExecute(
         output_buffer_offset += buffer_byte_size;
       }
       */
-      std::cout << "----> filling array Done " << std::endl;
       if (responses[r] == nullptr) {
         LOG_MESSAGE(
             TRITONSERVER_LOG_ERROR,

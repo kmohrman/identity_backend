@@ -64,7 +64,7 @@ public:
   void runToCompletion();
   //cms::cuda::host::unique_ptr<uint32_t[]> getOutput();
   void* getOutput();
-  void fillSource(const void* input_buffer);
+  void fillSource(const void* input_buffer,bool iClear);
 
 private:
   std::string data_;
@@ -123,11 +123,8 @@ void BSTest::Event() {
 }
 void BSTest::setItAll(unsigned int iId,std::vector<std::string> const& esproducers,std::vector<std::string> runs) { 
   std::string datadir = "/models/identity_fp32/1/data";
-  std::cout << "---> loading data " << std::endl;
   fSource = new edm::Source(1, reg_, datadir);
-  std::cout << "---> loading data done " << std::endl;
   for (auto const& name : esproducers) {
-    std::cout << "---> filling producers " << std::endl;
     fPluginManager.load(name);
     //std::filesystem::path datadir = "/models/identity_fp32/1/data";
     auto esp = edm::ESPluginFactory::create(name, datadir);
@@ -159,28 +156,26 @@ void BSTest::runToCompletion() {
       std::rethrow_exception(*(globalWaitTask->exceptionPtr()));
     }
 }
-void BSTest::fillSource(const void* input_buffer) {
-  fSource->fill(input_buffer);
+void BSTest::fillSource(const void* input_buffer,bool iClear) {
+  fSource->fill(input_buffer,iClear);
 }
 void* BSTest::getOutput() { 
-  std::cout << "---> Test 0 " << std::endl;
   auto globalWaitTask = edm::make_empty_waiting_task();
   globalWaitTask->increment_ref_count();
   for (auto& s : fStream) {
+    auto start = std::chrono::high_resolution_clock::now();
     auto pTask = edm::WaitingTaskHolder(globalWaitTask.get());
     s.runToCompletionAsync(pTask);
+    auto finish = std::chrono::high_resolution_clock::now();
+    auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish-start);
   }
   globalWaitTask->wait_for_all();
   if (globalWaitTask->exceptionPtr()) {
     std::rethrow_exception(*(globalWaitTask->exceptionPtr()));
   }
-  std::cout << "---> Test 4 " << std::endl;
   auto eventPtr = fSource->lastEvent_.get();
-  std::cout << "---- Event ID --- " <<  eventPtr->eventID() << std::endl;
   fStream[0].fOutput->produce(*eventPtr,fSetup);
-  std::cout << "---- Event ID ---  done " <<  std::endl;
   void* iInput = reinterpret_cast<void*>(fStream[0].fOutput->getOutput());
-  std::cout << "---> Test 5 " << std::endl;
   return iInput;
 }
 /*

@@ -26,11 +26,11 @@ namespace edm {
       pluginManager.load(name);
       registry_.beginModuleConstruction(modInd);
       path_.emplace_back(PluginFactory::create(name, registry_));
-      std::cout << "module " << modInd << " " << path_.back().get() << std::endl;
+      //std::cout << "module " << modInd << " " << path_.back().get() << std::endl;
       std::vector<Worker*> consumes;
       for (unsigned int depInd : registry_.consumedModules()) {
         if (depInd != ProductRegistry::kSourceIndex) {
-          std::cout << "module " << modInd << " depends on " << (depInd-1) << " " << path_[depInd-1].get() << std::endl;
+          //std::cout << "module " << modInd << " depends on " << (depInd-1) << " " << path_[depInd-1].get() << std::endl;
           consumes.push_back(path_[depInd - 1].get());
         }
       }
@@ -90,7 +90,7 @@ namespace edm {
       auto nextEventTaskHolder = WaitingTaskHolder(nextEventTask);
 
       for (auto iWorker = path_.rbegin(); iWorker != path_.rend(); ++iWorker) {
-        std::cout << "calling doWorkAsync for " << iWorker->get() << " with nextEventTask " << nextEventTask << " -- " << eventPtr << std::endl;
+        //std::cout << "calling doWorkAsync for " << iWorker->get() << " with nextEventTask " << nextEventTask << " -- " << eventPtr << std::endl;
         (*iWorker)->doWorkAsync(*eventPtr, *eventSetup_, nextEventTask);
       }
     } else {
@@ -104,7 +104,7 @@ namespace edm {
       auto eventPtr = event.get();
       //auto nextEventTaskHolder = WaitingTaskHolder(nextEventTask);
       for (auto iWorker = path_.rbegin(); iWorker != path_.rend(); ++iWorker) {
-        std::cout << "calling doWorkAsync for " << iWorker->get() << " with nextEventTask " << h << std::endl;
+        //std::cout << "calling doWorkAsync for " << iWorker->get() << " with nextEventTask " << h << std::endl;
         (*iWorker)->doWorkAsync(*eventPtr, *eventSetup_, h);
       }
     }
@@ -143,7 +143,7 @@ namespace edm {
       // all workers have been processed (should not happen though)
       auto nextEventTaskHolder = WaitingTaskHolder(nextEventTask);
       for (auto iWorker = path_.rbegin(); iWorker != path_.rend(); ++iWorker) {
-        std::cout << "calling doWorkAsync for " << iWorker->get() << " with nextEventTask " << nextEventTask << std::endl;
+        //std::cout << "calling doWorkAsync for " << iWorker->get() << " with nextEventTask " << nextEventTask << std::endl;
         (*iWorker)->doWorkAsync(*eventPtr, *eventSetup_, nextEventTask);
       }
     } else {
