@@ -40,11 +40,11 @@ namespace {
     for (unsigned int ifed = 0; ifed < nfeds; ++ifed) {
       unsigned int fedId   = (unsigned int) test_buffer[iter]; iter++;
       unsigned int fedSize = (unsigned int) test_buffer[iter]; iter++;
-      fedId = 1200+ifed;
-      fedSize = 20;
+      //fedId = 1200+ifed;
+      //fedSize = 20;
       FEDRawData &rawData = rawCollection.FEDData(fedId);
       rawData.resize(fedSize*4);
-      //std::memcpy(rawData.data(),&(test_buffer[iter]),fedSize*4);
+      std::memcpy(rawData.data(),&(test_buffer[iter]),fedSize*4);
       iter += fedSize;
     }
     return rawCollection;
