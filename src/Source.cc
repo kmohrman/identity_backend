@@ -27,7 +27,7 @@ namespace {
     const uint32_t * test_buffer = reinterpret_cast<const uint32_t *>(input_buffer);
     unsigned int nfeds = test_buffer[iter];
     iter++;
-    nfeds = 108;
+    //nfeds = 108;
     /*
     unsigned int feds[nfeds];
     unsigned pId = 0; 
@@ -37,6 +37,7 @@ namespace {
 	 i0 != 107 && i0 != 115 && i0 != 116 && i0 != 117 && i0 != 118 && i0 != 119 && i0 != 127 && i0 != 128 && i0 != 129 && i0 != 130 && i0 != 131) {feds[pId]=1200+i0; pId++;}
     }
     */
+    std::cout << "---> nfeds " << nfeds << std::endl;
     for (unsigned int ifed = 0; ifed < nfeds; ++ifed) {
       unsigned int fedId   = (unsigned int) test_buffer[iter]; iter++;
       unsigned int fedSize = (unsigned int) test_buffer[iter]; iter++;

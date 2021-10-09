@@ -549,7 +549,7 @@ TRITONBACKEND_ModelInstanceInitialize(TRITONBACKEND_ModelInstance* instance)
 		"SiPixelFedCablingMapGPUWrapperESProducer",
   		"SiPixelGainCalibrationForHLTGPUESProducer",
   		"PixelCPEFastESProducer"};
-  lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA", "CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA"};//,"CountValidatorSimple"};
+  lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA", "SiPixelRecHitFromCUDA", "CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA"};//,"CountValidatorSimple"};
   fBSTest->setItAll(0,lESModules,lEDModules);
   
   return nullptr;  // success
@@ -826,7 +826,7 @@ TRITONBACKEND_ModelInstanceExecute(
       // back a buffer in GPU memory we just fail the request.
       void* output_buffer;
       void* output_tmp = fBSTest->getOutput();
-      uint64_t buffer_byte_size = 800000;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
+      uint64_t buffer_byte_size = 6218596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
       uint32_t nDigi0 = reinterpret_cast<uint32_t*>(output_tmp)[0];
       //uint32_t nDigi1 = reinterpret_cast<uint32_t*>(output_tmp)[1];
       //std::cout << " XXX buff ----> " << buffer_byte_size << " -- " << nDigi0 << " -- " << nDigi1 << std::endl;
