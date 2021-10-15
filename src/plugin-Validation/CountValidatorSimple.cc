@@ -24,7 +24,7 @@ namespace {
 class CountValidatorSimple : public edm::EDProducer {
 public:
   explicit CountValidatorSimple(edm::ProductRegistry& reg);
-  uint32_t* getOutput();
+  uint8_t* getOutput();
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
   using HMSstorage = HostProduct<uint32_t[]>;
   
@@ -45,7 +45,7 @@ private:
   cms::cuda::host::unique_ptr<uint32_t[]> rawIdArr_;
   cms::cuda::host::unique_ptr<uint16_t[]> adc_;
   cms::cuda::host::unique_ptr<int32_t[]>  clus_;
-  uint32_t* output_;
+  uint8_t* output_;
 
 };
 
@@ -56,37 +56,30 @@ CountValidatorSimple::CountValidatorSimple(edm::ProductRegistry& reg)
   clusterToken_(reg.consumes<cms::cuda::Product<SiPixelClustersCUDA>>()),
   trackToken_(reg.consumes<PixelTrackHeterogeneous>()),
   vertexToken_(reg.consumes<ZVertexHeterogeneous>()) {
-  output_ = new uint32_t[5*150000+32768*36+1];
+  output_ = new uint8_t[7000000];
+  //output_ = new uint32_t[5*150000+32768*36+1+2000+3*35000];
+  //output_.reset(new uint32_t(5*150000+32768*36+1+2000+3*35000));
 }
 
 void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   bool ok = true;
   unsigned int pCount = 0;
   {
+
     auto const& hits = iEvent.get(hitsToken_);
+    
     auto const& pdigis = iEvent.get(digiToken_);
     cms::cuda::ScopedContextProduce ctx{pdigis};
-    //auto const& count = iEvent.get(digiClusterCountToken_);
     auto const& digis = ctx.get(iEvent, digiToken_);
-    //auto const& clusters = ctx.get(iEvent, clusterToken_);
-    /*
-    DigiClusterCount count(1,1,1);
-    if (digis.nModules() != count.nModules()) {
-      ss << "\n N(modules) is " << digis.nModules() << " expected " << count.nModules();
-      ok = false;
-    }
-    if (digis.nDigis() != count.nDigis()) {
-      ss << "\n N(digis) is " << digis.nDigis() << " expected " << count.nDigis();
-      ok = false;
-    }
-    if (clusters.nClusters() != count.nClusters()) {
-      ss << "\n N(clusters) is " << clusters.nClusters() << " expected " << count.nClusters();
-      ok = false;
-    }
-    */
     nHits_ = hits.get()[0];
-    std::memcpy(output_ + pCount,hits.get(),(4*nHits_+1)*sizeof(uint32_t)); pCount+=(4*nHits_+1);
-    
+    if(nHits_ > 35000) std::cout << "----> Too many Hits #Hits  " << nHits_ << " Max! 30000 " << std::endl;
+    if(nHits_ > 35000) nHits_ = 35000;
+    //output_[pCount] = nHits_; pCount++;
+    std::memcpy(output_+pCount,&nHits_,sizeof(uint32_t)); pCount += 4;
+    static const unsigned maxNumModules = 2000;
+    std::memcpy(output_ + pCount,hits.get()+1,    (maxNumModules)*sizeof(uint32_t)); pCount += 4*maxNumModules;
+    std::memcpy(output_ + pCount,hits.get()+2001, (3*nHits_)*sizeof(float)); pCount+=4*(3*nHits_);
+
     nDigis_    = digis.nDigis();
     if(nDigis_ > 150000) std::cout << "----> Too many Digis #Digis  " << nDigis_ << " Max! " << nDigis_ << std::endl;
     if(nDigis_ > 150000) nDigis_ = 150000;
@@ -94,74 +87,49 @@ void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iS
     rawIdArr_  = digis.rawIdArrToHostAsync(ctx.stream());
     adc_       = digis.adcToHostAsync(ctx.stream());
     clus_      = digis.clusToHostAsync(ctx.stream());
-    output_[pCount] = digis.nDigis(); pCount++;
-    std::memcpy(output_ + pCount,rawIdArr_.get(),nDigis_*sizeof(uint32_t)); pCount+=nDigis_;
-    std::memcpy(output_ + pCount,pdigi_.get()   ,nDigis_*sizeof(uint32_t)); pCount+=nDigis_;
-    std::memcpy(output_ + pCount,adc_.get()     ,nDigis_*sizeof(uint16_t)); pCount+=nDigis_;
-    std::memcpy(output_ + pCount,clus_.get()    ,nDigis_*sizeof(uint32_t)); pCount+=nDigis_;
-    //output_[1] = (uint32_t*)rawIdArr_.get();
-    //output_[nDigis_+1]   = (uint32_t*)pdigi_.get();
-    //output_[2*nDigis_+1] = (uint32_t*)adc_.get();
-    //output_[3*nDigis_+1] = (uint32_t*) clus_.get();
-    //std::cout << " -- " << nDigis_ << "--> " << rawIdArr_.get()[0] << " -- " << pdigi_.get()[0]    << " -- " << adc_.get()[0] << " -- " << clus_.get()[0] << std::endl;
-    //std::cout << " -- " << nDigis_ << "--> " << output_[1]         << " -- " << output_[nDigis_+1] << " -- " <<  output_[2*nDigis_+1] << " -- " <<  output_[3*nDigis_+1] << std::endl;
-    //pCount = 3*nDigis_+1;
-  } 
+    //output_[pCount] = nDigis_; pCount++;
+    std::memcpy(output_+pCount,&nDigis_,sizeof(uint32_t)); pCount += 4;
+    std::memcpy(output_ + pCount,pdigi_.get()   ,nDigis_*sizeof(uint32_t)); pCount+=4*nDigis_;
+    std::memcpy(output_ + pCount,rawIdArr_.get(),nDigis_*sizeof(uint32_t)); pCount+=4*nDigis_;
+    std::memcpy(output_ + pCount,adc_.get()     ,nDigis_*sizeof(uint16_t)); pCount+=2*nDigis_;
+    std::memcpy(output_ + pCount,clus_.get()    ,nDigis_*sizeof(int32_t));  pCount+=4*nDigis_;
+  }
   {
     auto const& tracks = iEvent.get(trackToken_);
     uint32_t nTracks = tracks->stride();
-    output_[pCount] = nTracks; pCount++;
-    std::memcpy(output_ + pCount,tracks->chi2.data()   ,nTracks*sizeof(float));   pCount+=nTracks;
-    std::memcpy(output_ + pCount,tracks->m_quality.data(),nTracks*sizeof(uint8_t)); pCount+=nTracks;
-    std::memcpy(output_ + pCount,tracks->eta.data()    ,nTracks*sizeof(float)); pCount+=nTracks;
-    std::memcpy(output_ + pCount,tracks->pt.data()     ,nTracks*sizeof(float)); pCount+=nTracks;
-    std::memcpy(output_ + pCount,tracks->stateAtBS.state(0).data(),nTracks*sizeof(float)*5); pCount+=(nTracks*5);
-    std::memcpy(output_ + pCount,tracks->stateAtBS.covariance(0).data(),nTracks*sizeof(float)*15); pCount+=(nTracks*15);
-    std::memcpy(output_ + pCount,tracks->hitIndices.begin(),5*nTracks*sizeof(uint16_t)); pCount+=nTracks*5;
-    std::memcpy(output_ + pCount,tracks->detIndices.begin(),5*nTracks*sizeof(uint16_t)); pCount+=nTracks*5;
-    //std::cout << " -1-> " << tracks->hitIndices.size(0)           << " -- " << tracks->nHits(0) << std::endl;
-    //std::cout << " -1-> " << tracks->detIndices.size(0)           << " -- " << tracks->detIndices.size() << std::endl;
-    //std::cout << " -1-> " << &(*(tracks->stateAtBS.state(0).array().begin()))           << " -- " << &(*(tracks->stateAtBS.state(0).array().end()))     << " -- " <<  &(*(tracks->stateAtBS.state(31721).array().begin())) << std::endl;
-    //std::cout << "-1-> " << tracks->stateAtBS.state(0) << std::endl;
-    //for(auto iState = 0; iState < 100; iState++) {  
-    //  for(auto i0 = tracks->stateAtBS.covariance(iState).begin(); i0 < tracks->stateAtBS.covariance(iState).end(); i0++) { std::cout << "iter---> " << iState << " -- " << &(*i0) << " -- " << *i0 << std::endl;}
-    // }
-    //std::cout << " --> done " << std::endl;
-    //std::cout << " -2-> " << &(*(tracks->stateAtBS.covariance(0).array().begin()))      << " -- " << &(*(tracks->stateAtBS.covariance(0).array().end()))     << " -- " <<  &(*(tracks->stateAtBS.covariance(31721).array().begin())) << std::endl;
-    //std::cout << " -3-> " << tracks->stateAtBS.state(0).data()           << " -- " << tracks->stateAtBS.state(1).data()          << " -- " <<  tracks->stateAtBS.state(31721).data() << std::endl;
-    //std::cout << " -4-> " << tracks->stateAtBS.covariance(0).data()      << " -- " << tracks->stateAtBS.covariance(1).data()     << " -- " <<  tracks->stateAtBS.covariance(31721).data() << std::endl;
-    //std::cout << " -2-> " << tracks->stateAtBS.covariance(0).array() << " -- " << tracks->stateAtBS.covariance(1).array() << " -- " << tracks->stateAtBS.covariance(31728).array() << std::endl;
-    //std::cout << " -1-> " << &(tracks->stateAtBS.state(0)(0))      << " -- " << &(tracks->stateAtBS.state(0)(1))      << " -- " << &(tracks->stateAtBS.state(0)(4)) << std::endl;
-    //std::cout << " -2-> " << &(tracks->stateAtBS.covariance(0)(0)) << " -- " << &(tracks->stateAtBS.covariance(0)(1)) << " -- " << &(tracks->stateAtBS.covariance(0)(14)) << std::endl;
-    //std::cout << " -2-> " << (tracks->stateAtBS.state.data())      << std::endl;
-    //std::cout << " -2-> " << &(tracks->stateAtBS.covariance(0).data()) << " -- " << &(tracks->stateAtBS.covariance(1).data()) << " -- " << &(tracks->stateAtBS.covariance(31728).data()) << std::endl;
-    //std::cout << " -1-> " << &(tracks->stateAtBS.state(0)) << " -- " << &(tracks->stateAtBS.state(1)) << " -- " << &(tracks->stateAtBS.state(31728)) << std::endl;
-    //std::cout << " -2-> " << &(tracks->stateAtBS.covariance(0)) << " -- " << &(tracks->stateAtBS.covariance(1)) << " -- " << &(tracks->stateAtBS.covariance(31728)) << std::endl;
-    //std::cout << " -3-> " << tracks->stateAtBS(0) << " -- " << tracks->stateAtBS(1) << " -- " << tracks->stateAtBS(31728) << std::endl;
-    //std::memcpy(output_ + pCount,tracks->stateAtBS.data(),nTracks*sizeof(uint8_t)); pCount+=nTracks;
-    //std::cout << " N Tracks 4 --- " << nTracks << std::endl;
-    }
-    {
+    //output_[pCount] = nTracks; pCount++;
+    std::memcpy(output_ + pCount,&nTracks,sizeof(uint32_t)); pCount += 4;
+    std::memcpy(output_ + pCount,tracks->chi2.data()     ,nTracks*sizeof(float));                  pCount+=4*nTracks;
+    std::memcpy(output_ + pCount,tracks->m_quality.data(),nTracks*sizeof(uint8_t));                pCount+=nTracks;
+    std::memcpy(output_ + pCount,tracks->eta.data()      ,nTracks*sizeof(float));                  pCount+=4*nTracks;
+    std::memcpy(output_ + pCount,tracks->pt.data()       ,nTracks*sizeof(float));                  pCount+=4*nTracks;
+    std::memcpy(output_ + pCount,tracks->stateAtBS.state(0).data(),     nTracks*sizeof(float)*5);  pCount+=(4*nTracks*5);
+    std::memcpy(output_ + pCount,tracks->stateAtBS.covariance(0).data(),nTracks*sizeof(float)*15); pCount+=(4*nTracks*15);
+    std::memcpy(output_ + pCount,tracks->hitIndices.begin(),5*nTracks*sizeof(uint32_t));     pCount+=4*nTracks*5;
+    std::memcpy(output_ + pCount,tracks->hitIndices.off,    (nTracks+1)*sizeof(int32_t));        pCount+=4*(nTracks+1);
+    std::memcpy(output_ + pCount,tracks->detIndices.begin(),5*nTracks*sizeof(uint32_t));     pCount+=4*nTracks*5;
+    std::memcpy(output_ + pCount,tracks->detIndices.off,    (nTracks+1)*sizeof(int32_t));        pCount+=4*(nTracks+1);
+
+    auto const& vertices = iEvent.get(vertexToken_);
     static constexpr uint32_t MAXTRACKS = 32 * 1024;
     static constexpr uint32_t MAXVTX = 1024;
-    auto const& vertices = iEvent.get(vertexToken_);
-    uint32_t nvtx = vertices->nvFinal;
-    output_[pCount] = nvtx;
-    std::memcpy(output_ + pCount,vertices->idv    ,MAXTRACKS*sizeof(int16_t));   pCount+=MAXTRACKS;
-    std::memcpy(output_ + pCount,vertices->zv     ,MAXVTX*sizeof(float));        pCount+=MAXVTX;
-    std::memcpy(output_ + pCount,vertices->wv     ,MAXVTX*sizeof(float));        pCount+=MAXVTX;
-    std::memcpy(output_ + pCount,vertices->chi2   ,MAXVTX*sizeof(float));        pCount+=MAXVTX;
-    std::memcpy(output_ + pCount,vertices->ptv2   ,MAXVTX*sizeof(float));        pCount+=MAXVTX;
-    std::memcpy(output_ + pCount,vertices->ndof   ,MAXVTX*sizeof(int32_t));      pCount+=MAXVTX;
-    std::memcpy(output_ + pCount,vertices->sortInd,MAXVTX*sizeof(uint16_t));     pCount+=MAXVTX;
-   }
-   std::cout << " N Vtx 5 --- " << " --- total " << pCount << std::endl;
+    //output_[pCount] = nvtx; pCount++;
+    std::memcpy(output_ + pCount,&(vertices->nvFinal),sizeof(uint32_t)); pCount += 4;
+    std::memcpy(output_ + pCount,vertices->idv    ,MAXTRACKS*sizeof(int16_t));   pCount+=2*MAXTRACKS;
+    std::memcpy(output_ + pCount,vertices->zv     ,MAXVTX*sizeof(float));        pCount+=4*MAXVTX;
+    std::memcpy(output_ + pCount,vertices->wv     ,MAXVTX*sizeof(float));        pCount+=4*MAXVTX;
+    std::memcpy(output_ + pCount,vertices->chi2   ,MAXVTX*sizeof(float));        pCount+=4*MAXVTX;
+    std::memcpy(output_ + pCount,vertices->ptv2   ,MAXVTX*sizeof(float));        pCount+=4*MAXVTX;
+    std::memcpy(output_ + pCount,vertices->ndof   ,MAXVTX*sizeof(int32_t));      pCount+=4*MAXVTX;
+    std::memcpy(output_ + pCount,vertices->sortInd,MAXVTX*sizeof(uint16_t));     pCount+=2*MAXVTX;
+  }
+  std::cout << "----> " << pCount << " -- 8146596 " <<std::endl;
   ++allEvents;
   if (ok) {
     ++goodEvents;
   }
 }
-uint32_t* CountValidatorSimple::getOutput() {
+uint8_t* CountValidatorSimple::getOutput() {
   return output_;
 }
 void CountValidatorSimple::endJob() {

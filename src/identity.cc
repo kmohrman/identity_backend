@@ -763,7 +763,6 @@ TRITONBACKEND_ModelInstanceExecute(
 						     TRITONSERVER_ERROR_UNSUPPORTED,
 						     "failed to get input buffer in CPU memory"));
     }
-    //std::cout << "filling Source " << input_buffer << " -- " << buffer_byte_size  << " -- " << input_shape[0] << std::endl;
     fBSTest->fillSource(input_buffer,true);
     for(unsigned int i0 = 1; i0 < input_shape[0]; i0++) fBSTest->fillSource(input_buffer,false);
     
@@ -824,10 +823,10 @@ TRITONBACKEND_ModelInstanceExecute(
       // Step 2. Get the output buffer. We request a buffer in CPU
       // memory but we have to handle any returned type. If we get
       // back a buffer in GPU memory we just fail the request.
-      void* output_buffer;
+      void* output_buffer;// = fBSTest->getOutput();
       void* output_tmp = fBSTest->getOutput();
-      uint64_t buffer_byte_size = 7718596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
-      uint32_t nDigi0 = reinterpret_cast<uint32_t*>(output_tmp)[0];
+      uint64_t buffer_byte_size = 7000000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
+      //uint32_t nDigi0 = reinterpret_cast<uint32_t*>(output_tmp)[0];
       //uint32_t nDigi1 = reinterpret_cast<uint32_t*>(output_tmp)[1];
       //std::cout << " XXX buff ----> " << buffer_byte_size << " -- " << nDigi0 << " -- " << nDigi1 << std::endl;
       //memcpy(reinterpret_cast<uint32_t*>(output_buffer),// size_t output_buffer_offset = 0;
@@ -855,7 +854,10 @@ TRITONBACKEND_ModelInstanceExecute(
                 .c_str());
         continue;
       }
-      memcpy(output_buffer,output_tmp,nDigi0*16);
+      //output_buffer = fBSTest->getOutput();
+      //output_buffer = output_tmp;
+      memcpy(output_buffer,output_tmp,buffer_byte_size);
+      //std::cout << "---> output " << reinterpret_cast<uint32_t*>(output_buffer)[0] << std::endl;
       // Step 3. Copy input -> output. We can only handle if the input
       // buffers are on CPU so fail otherwise.
       //size_t output_buffer_offset = 0;
