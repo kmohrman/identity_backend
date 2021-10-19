@@ -7,15 +7,17 @@
 #include <cuda_runtime.h>
 
 #include "CUDACore/cudaCheck.h"
+#include "CUDACore/currentDevice.h"
 #include "CUDACore/deviceCount.h"
-#include "CachingDeviceAllocator.h"
+#include "CUDACore/eventWorkHasCompleted.h"
+#include "CUDACore/GenericCachingAllocator.h"
 
 namespace cms::cuda::allocator {
   // Use caching or not
   enum class Policy { Synchronous = 0, Asynchronous = 1, Caching = 2 };
-#ifndef CUDA_DISABLE_CACHING_ALLOCATOR
+#ifndef CUDADEV_DISABLE_CACHING_ALLOCATOR
   constexpr Policy policy = Policy::Caching;
-#elif CUDA_VERSION >= 11020 && !defined CUDA_DISABLE_ASYNC_ALLOCATOR
+#elif CUDA_VERSION >= 11020 && !defined CUDADEV_DISABLE_ASYNC_ALLOCATOR
   constexpr Policy policy = Policy::Asynchronous;
 #else
   constexpr Policy policy = Policy::Synchronous;
@@ -50,7 +52,84 @@ namespace cms::cuda::allocator {
     return ret;
   }
 
-  inline notcub::CachingDeviceAllocator& getCachingDeviceAllocator() {
+  struct DeviceTraits {
+    using DeviceType = int;
+    using QueueType = cudaStream_t;
+    using EventType = cudaEvent_t;
+
+    static constexpr DeviceType kInvalidDevice = -1;
+
+    static DeviceType currentDevice() { return cms::cuda::currentDevice(); }
+
+    static DeviceType memoryDevice(DeviceType deviceEvent) {
+      // For device allocator the device where the memory is allocated
+      // on is the same as the device where the event is recorded on.
+      return deviceEvent;
+    }
+
+    static bool canReuseInDevice(DeviceType a, DeviceType b) { return a == b; }
+
+    static bool canReuseInQueue(QueueType a, QueueType b) { return a == b; }
+
+    template <typename C>
+    static bool deviceCompare(DeviceType a_dev, DeviceType b_dev, C&& compare) {
+      if (a_dev == b_dev) {
+        return compare();
+      }
+      return a_dev < b_dev;
+    }
+
+    static bool eventWorkHasCompleted(EventType e) { return cms::cuda::eventWorkHasCompleted(e); }
+
+    static EventType createEvent() {
+      EventType e;
+      cudaCheck(cudaEventCreateWithFlags(&e, cudaEventDisableTiming));
+      return e;
+    }
+
+    static void destroyEvent(EventType e) { cudaCheck(cudaEventDestroy(e)); }
+
+    static EventType recreateEvent(EventType e, DeviceType prev, DeviceType next) {
+      throw std::runtime_error("CUDADeviceTraits::recreateEvent() should never be called");
+    }
+
+    static void recordEvent(EventType e, QueueType queue) { cudaCheck(cudaEventRecord(e, queue)); }
+
+    struct DevicePrinter {
+      DevicePrinter(DeviceType device) : device_(device) {}
+      void write(std::ostream& os) const { os << "Device " << device_; }
+      DeviceType device_;
+    };
+
+    static DevicePrinter printDevice(DeviceType device) { return DevicePrinter(device); }
+
+    static void* allocate(size_t bytes) {
+      void* ptr;
+      cudaCheck(cudaMalloc(&ptr, bytes));
+      return ptr;
+    }
+
+    static void* tryAllocate(size_t bytes) {
+      void* ptr;
+      auto error = cudaMalloc(&ptr, bytes);
+      if (error == cudaErrorMemoryAllocation) {
+        return nullptr;
+      }
+      cudaCheck(error);
+      return ptr;
+    }
+
+    static void free(void* ptr) { cudaCheck(cudaFree(ptr)); }
+  };
+
+  inline std::ostream& operator<<(std::ostream& os, DeviceTraits::DevicePrinter const& pr) {
+    pr.write(os);
+    return os;
+  }
+
+  using CachingDeviceAllocator = GenericCachingAllocator<DeviceTraits>;
+
+  inline CachingDeviceAllocator& getCachingDeviceAllocator() {
     if (debug) {
       std::cout << "cub::CachingDeviceAllocator settings\n"
                 << "  bin growth " << binGrowth << "\n"
@@ -58,7 +137,7 @@ namespace cms::cuda::allocator {
                 << "  max bin    " << maxBin << "\n"
                 << "  resulting bins:\n";
       for (auto bin = minBin; bin <= maxBin; ++bin) {
-        auto binSize = notcub::CachingDeviceAllocator::IntPow(binGrowth, bin);
+        auto binSize = ::allocator::intPow(binGrowth, bin);
         if (binSize >= (1 << 30) and binSize % (1 << 30) == 0) {
           std::cout << "    " << std::setw(8) << (binSize >> 30) << " GB\n";
         } else if (binSize >= (1 << 20) and binSize % (1 << 20) == 0) {
@@ -73,12 +152,7 @@ namespace cms::cuda::allocator {
     }
 
     // the public interface is thread safe
-    static notcub::CachingDeviceAllocator allocator{binGrowth,
-                                                    minBin,
-                                                    maxBin,
-                                                    minCachedBytes(),
-                                                    false,  // do not skip cleanup
-                                                    debug};
+    static CachingDeviceAllocator allocator{binGrowth, minBin, maxBin, minCachedBytes(), debug};
     return allocator;
   }
 }  // namespace cms::cuda::allocator

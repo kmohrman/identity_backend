@@ -82,7 +82,7 @@ namespace cms {
       // This flag tells whether the CUDA stream may be reused by a
       // consumer or not. The goal is to have a "chain" of modules to
       // queue their work to the same stream.
-      mutable std::atomic<bool> mayReuseStream_  = { true };//std::atomic<bool>(true);  //!
+      mutable std::atomic<bool> mayReuseStream_{true};  //!
 
       // The CUDA device associated with this product
       int device_ = -1;  //!

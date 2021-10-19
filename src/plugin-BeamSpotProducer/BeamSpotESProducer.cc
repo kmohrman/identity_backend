@@ -18,10 +18,10 @@ private:
 
 void BeamSpotESProducer::produce(edm::EventSetup& eventSetup) {
   auto bs = std::make_unique<BeamSpotPOD>();
+
   std::ifstream in(data_ / "beamspot.bin", std::ios::binary);
   in.exceptions(std::ifstream::badbit | std::ifstream::failbit | std::ifstream::eofbit);
   in.read(reinterpret_cast<char*>(bs.get()), sizeof(BeamSpotPOD));
-
   eventSetup.put(std::move(bs));
 }
 

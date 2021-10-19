@@ -42,7 +42,7 @@ namespace edm {
 
   private:
     std::vector<Worker*> itemsToGet_;
-    std::atomic<bool> prefetchRequested_{false};// = std::atomic<bool>{false};
+    std::atomic<bool> prefetchRequested_{false};
   };
 
   template <typename T>
@@ -106,7 +106,7 @@ namespace edm {
 
     T producer_;
     WaitingTaskList waitingTasksWork_;
-    std::atomic<bool> workStarted_{false};// = false;
+    std::atomic<bool> workStarted_{false};
   };
 }  // namespace edm
 #endif

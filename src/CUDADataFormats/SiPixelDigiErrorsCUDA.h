@@ -7,6 +7,8 @@
 #include "CUDACore/device_unique_ptr.h"
 #include "CUDACore/host_unique_ptr.h"
 #include "DataFormats/PixelErrors.h"
+//#include "DataFormats/SiPixelErrorCompact.h"
+//#include "DataFormats/SiPixelFormatterErrors.h"
 
 class SiPixelDigiErrorsCUDA {
 public:
@@ -20,13 +22,12 @@ public:
   SiPixelDigiErrorsCUDA& operator=(SiPixelDigiErrorsCUDA&&) = default;
 
   const PixelFormatterErrors& formatterErrors() const { return formatterErrors_h; }
-
+  
   cms::cuda::SimpleVector<PixelErrorCompact>* error() { return error_d.get(); }
   cms::cuda::SimpleVector<PixelErrorCompact> const* error() const { return error_d.get(); }
   cms::cuda::SimpleVector<PixelErrorCompact> const* c_error() const { return error_d.get(); }
 
-  using HostDataError =
-      std::pair<cms::cuda::SimpleVector<PixelErrorCompact>, cms::cuda::host::unique_ptr<PixelErrorCompact[]>>;
+  using HostDataError = std::pair<cms::cuda::SimpleVector<PixelErrorCompact>, cms::cuda::host::unique_ptr<PixelErrorCompact[]>>;
   HostDataError dataErrorToHostAsync(cudaStream_t stream) const;
 
   void copyErrorToHostAsync(cudaStream_t stream);
@@ -38,4 +39,4 @@ private:
   PixelFormatterErrors formatterErrors_h;
 };
 
-#endif
+#endif  // CUDADataFormats_SiPixelDigi_interface_SiPixelDigiErrorsCUDA_h

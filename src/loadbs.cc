@@ -8,7 +8,7 @@
 //#include "Framework/WaitingTask.h"
 //#include "Framework/WaitingTaskHolder.h"
 #include "DataFormats/FEDRawDataCollection.h"
-#include "plugin-SiPixelClusterizer/SiPixelRawToClusterCUDA.cc"
+//#include "plugin-SiPixelClusterizer/SiPixelRawToClusterCUDA.cc"
 
 #include "Framework/ESPluginFactory.h"
 #include "Framework/PluginFactory.h"

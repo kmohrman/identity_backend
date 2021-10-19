@@ -21,8 +21,9 @@ namespace edmplugin {
       std::cout << "plugin " << plugin << " in " << library << std::endl;
       pluginToLibrary_[plugin] = library;
     }
+    std::cout << "---> Done " << std::endl;
   }
-
+  
   SharedLibrary const& PluginManager::load(std::string const& pluginName) {
     std::lock_guard<std::recursive_mutex> guard(mutex_);
     auto libName = pluginToLibrary_.at(pluginName);

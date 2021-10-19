@@ -545,11 +545,11 @@ TRITONBACKEND_ModelInstanceInitialize(TRITONBACKEND_ModelInstance* instance)
   fBSTest = new BSTest("data/beamspot.bin");
   std::vector<std::string> lESModules;
   std::vector<std::string> lEDModules;
-  lESModules = {"BeamSpotESProducer",
-		"SiPixelFedCablingMapGPUWrapperESProducer",
-  		"SiPixelGainCalibrationForHLTGPUESProducer",
-  		"PixelCPEFastESProducer"};
-  lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA", "SiPixelRecHitFromCUDA", "CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA"};//,"CountValidatorSimple"};
+  lESModules = {//"BeamSpotESProducer",
+		"SiPixelGainCalibrationForHLTGPUESProducer",
+		"SiPixelROCsStatusAndMappingWrapperESProducer",
+		"PixelCPEFastESProducer"};
+  lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA","SiPixelDigiErrorsSoAFromCUDA", "SiPixelRecHitFromCUDA", "CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA"};//,"CountValidatorSimple"};
   fBSTest->setItAll(0,lESModules,lEDModules);
   
   return nullptr;  // success

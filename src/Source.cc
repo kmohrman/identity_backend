@@ -21,12 +21,15 @@ namespace {
     return rawCollection;
   }
 
-  FEDRawDataCollection readRawBuff(const void* input_buffer) { //, unsigned int nfeds) {
+  //FEDRawDataCollection
+  std::pair<FEDRawDataCollection,BeamSpotPOD> readRawBuff(const void* input_buffer) { //, unsigned int nfeds) {
+    BeamSpotPOD bs;
     FEDRawDataCollection rawCollection;
     unsigned iter = 0; 
     const uint32_t * test_buffer = reinterpret_cast<const uint32_t *>(input_buffer);
-    unsigned int nfeds = test_buffer[iter];
-    iter++;
+    unsigned int pBSSize = 11;
+    std::memcpy(&bs,&(test_buffer[iter]),sizeof(float)*pBSSize); iter+=pBSSize;
+    unsigned int nfeds = test_buffer[iter]; iter++;
     /*
     nfeds = 108;
     unsigned int feds[nfeds];
@@ -48,14 +51,16 @@ namespace {
       std::memcpy(rawData.data(),&(test_buffer[iter]),fedSize*4);
       iter += fedSize;
     }
-    return rawCollection;
+    return std::pair<FEDRawDataCollection,BeamSpotPOD>(rawCollection,bs);
   }
 
 }  // namespace
 
 namespace edm {
   Source::Source(int maxEvents, ProductRegistry &reg, std::string const &datadir)
-    : maxEvents_(maxEvents), numEvents_(0), iterEvents_(1),fBase_(0), rawToken_(reg.produces<FEDRawDataCollection>()) {
+    : maxEvents_(maxEvents), numEvents_(0), iterEvents_(1),fBase_(0),
+      rawToken_(reg.produces<FEDRawDataCollection>()),
+      beamSpotPODToken_(reg.produces<BeamSpotPOD>()) {
     std::ifstream in_raw((datadir + "/raw.bin").c_str(), std::ios::binary);
 
     unsigned int nfeds;
@@ -87,7 +92,8 @@ namespace edm {
     }
     lastEvent_ = std::make_unique<Event>(streamId, old, reg);
     const int index = old;// % raw_.size();
-    lastEvent_->emplace(rawToken_, raw_[index]);
+    lastEvent_->emplace(rawToken_, raw_[index].first);
+    lastEvent_->emplace(beamSpotPODToken_, raw_[index].second);
     return lastEvent_;
   }
 

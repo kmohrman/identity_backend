@@ -1,11 +1,11 @@
-#include "CUDADataFormats/SiPixelDigiErrorsCUDA.h"
+#include <cassert>
 
+#include "CUDACore/copyAsync.h"
 #include "CUDACore/device_unique_ptr.h"
 #include "CUDACore/host_unique_ptr.h"
-#include "CUDACore/copyAsync.h"
 #include "CUDACore/memsetAsync.h"
+#include "CUDADataFormats/SiPixelDigiErrorsCUDA.h"
 
-#include <cassert>
 
 SiPixelDigiErrorsCUDA::SiPixelDigiErrorsCUDA(size_t maxFedWords, PixelFormatterErrors errors, cudaStream_t stream)
     : formatterErrors_h(std::move(errors)) {

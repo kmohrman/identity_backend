@@ -72,9 +72,9 @@
 #include <memory>
 #include <cassert>
 #include <atomic>
-#include <experimental/type_traits>
 #include "tbb/task.h"
 #include "tbb/concurrent_queue.h"
+ #include <experimental/type_traits>
 
 namespace edm {
   template <class T, class Deleter = std::default_delete<T>>
