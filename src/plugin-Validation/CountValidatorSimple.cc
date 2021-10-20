@@ -78,9 +78,11 @@ void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iS
     //output_[pCount] = nHits_; pCount++;
     std::memcpy(output_+pCount,&nHits_,sizeof(uint32_t)); pCount += 4;
     static const unsigned maxNumModules = 2000;
-    std::memcpy(output_ + pCount,hits.get()+1,    (maxNumModules)*sizeof(uint32_t)); pCount += 4*maxNumModules;
-    std::memcpy(output_ + pCount,hits.get()+2001, (3*nHits_)*sizeof(float)); pCount+=4*(3*nHits_);
-
+    std::memcpy(output_ + pCount,hits.get()+1,    (maxNumModules+1)*sizeof(uint32_t)); pCount += 4*(maxNumModules+1);
+    std::memcpy(output_ + pCount,hits.get()+maxNumModules+2, (3*nHits_)*sizeof(float)); pCount+=4*(3*nHits_);
+    std::cout << "-hits--> " << nHits_ << " ---" << hits.get()[0] << " -- " << pCount << std::endl;
+    
+    
     nDigis_    = digis.nDigis();
     if(nDigis_ > 150000) std::cout << "----> Too many Digis #Digis  " << nDigis_ << " Max! " << nDigis_ << std::endl;
     if(nDigis_ > 150000) nDigis_ = 150000;
