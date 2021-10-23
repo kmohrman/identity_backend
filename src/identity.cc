@@ -825,7 +825,7 @@ TRITONBACKEND_ModelInstanceExecute(
       // back a buffer in GPU memory we just fail the request.
       void* output_buffer;// = fBSTest->getOutput();
       void* output_tmp = fBSTest->getOutput();
-      uint64_t buffer_byte_size = 7000000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
+      uint64_t buffer_byte_size = 7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
       //uint32_t nDigi0 = reinterpret_cast<uint32_t*>(output_tmp)[0];
       //uint32_t nDigi1 = reinterpret_cast<uint32_t*>(output_tmp)[1];
       //std::cout << " XXX buff ----> " << buffer_byte_size << " -- " << nDigi0 << " -- " << nDigi1 << std::endl;
