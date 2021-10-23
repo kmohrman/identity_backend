@@ -95,7 +95,7 @@ void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iS
     std::memcpy(output_+pCount,&nHits_,sizeof(uint32_t)); pCount += 4;
     static const unsigned maxNumModules = 2000;
     std::memcpy(output_ + pCount,hits.get()+1,    (maxNumModules+1)*sizeof(uint32_t)); pCount += 4*(maxNumModules+1);
-    std::memcpy(output_ + pCount,hits.get()+maxNumModules+2, (3*nHits_)*sizeof(float)); pCount+=4*(3*nHits_);
+    std::memcpy(output_ + pCount,hits.get()+maxNumModules+2, (4*nHits_)*sizeof(float)); pCount+=4*(4*nHits_);
     
     nDigis_    = digis.nDigis();
     if(nDigis_ > 150000) std::cout << "----> Too many Digis #Digis  " << nDigis_ << " Max! " << nDigis_ << std::endl;
@@ -109,12 +109,11 @@ void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iS
     std::memcpy(output_ + pCount,rawIdArr_.get(),nDigis_*sizeof(uint32_t)); pCount+=4*nDigis_;
     std::memcpy(output_ + pCount,adc_.get()     ,nDigis_*sizeof(uint16_t)); pCount+=2*nDigis_;
     std::memcpy(output_ + pCount,clus_.get()    ,nDigis_*sizeof(int32_t));  pCount+=4*nDigis_;
-
+    
      auto const& pdigiErrors = iEvent.get(digiErrorToken_);
      nErrors_ = pdigiErrors.size();
      std::memcpy(output_+pCount,&nErrors_,sizeof(uint32_t)); pCount += 4;
      std::memcpy(output_+pCount,pdigiErrors.errorVector().data(),10*nErrors_);     pCount += 10*nErrors_;
-     //if(nErrors_ > 2) std::cout << " -Error 0- " << pdigiErrors.errorVector()[0].rawId << " -- " << pdigiErrors.errorVector()[0].word << " -- " << pdigiErrors.errorVector()[0].errorType << " -- " << pdigiErrors.errorVector()[0].fedId << std::endl;
   }
   {
     auto const& tracks = iEvent.get(trackToken_);
@@ -145,7 +144,7 @@ void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iS
     std::memcpy(output_ + pCount,vertices->ndof   ,MAXTRACKS*sizeof(int32_t));      pCount+=4*MAXTRACKS;
     std::memcpy(output_ + pCount,vertices->sortInd,MAXVTX*sizeof(uint16_t));     pCount+=2*MAXVTX;
   }
-  std::cout << "----> " << pCount << " -- 8146596 " <<std::endl;
+  //std::cout << "----> " << pCount << " -- 8146596 " <<std::endl;
   ++allEvents;
   if (ok) {
     ++goodEvents;
