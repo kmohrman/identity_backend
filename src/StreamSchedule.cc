@@ -37,17 +37,9 @@ namespace edm {
       path_.back()->setItemsToGet(std::move(consumes));
       ++modInd;
     }
-    pluginManager.load("CountValidatorSimple");
-    registry_.beginModuleConstruction(modInd);
-    fOutput = new CountValidatorSimple(registry_);
-    //std::vector<Worker*> consumes;
-    //for (unsigned int depInd : registry_.consumedModules()) {
-    //  if (depInd != ProductRegistry::kSourceIndex) {
-    //	std::cout << "module " << modInd << " depends on " << (depInd-1) << " " << path_[depInd-1].get() << std::endl;
-    //	consumes.push_back(path_[depInd - 1].get());
-    //      }
-    //}
-    //fOutput->setItemsToGet(std::move(consumes));
+    //pluginManager.load("CountValidatorSimple");
+    //registry_.beginModuleConstruction(modInd);
+    //fOutput = new CountValidatorSimple(registry_);
   }
 
   StreamSchedule::~StreamSchedule() = default;
@@ -90,7 +82,6 @@ namespace edm {
       auto nextEventTaskHolder = WaitingTaskHolder(nextEventTask);
 
       for (auto iWorker = path_.rbegin(); iWorker != path_.rend(); ++iWorker) {
-        //std::cout << "calling doWorkAsync for " << iWorker->get() << " with nextEventTask " << nextEventTask << " -- " << eventPtr << std::endl;
         (*iWorker)->doWorkAsync(*eventPtr, *eventSetup_, nextEventTask);
       }
     } else {

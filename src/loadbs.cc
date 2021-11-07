@@ -65,6 +65,7 @@ public:
   //cms::cuda::host::unique_ptr<uint32_t[]> getOutput();
   void* getOutput();
   void fillSource(const void* input_buffer,bool iClear);
+  uint32_t getSize();
 
 private:
   std::string data_;
@@ -163,40 +164,18 @@ void* BSTest::getOutput() {
   auto globalWaitTask = edm::make_empty_waiting_task();
   globalWaitTask->increment_ref_count();
   for (auto& s : fStream) {
-    auto start = std::chrono::high_resolution_clock::now();
     auto pTask = edm::WaitingTaskHolder(globalWaitTask.get());
     s.runToCompletionAsync(pTask);
-    auto finish = std::chrono::high_resolution_clock::now();
-    auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish-start);
   }
   globalWaitTask->wait_for_all();
   if (globalWaitTask->exceptionPtr()) {
     std::rethrow_exception(*(globalWaitTask->exceptionPtr()));
   }
-  auto eventPtr = fSource->lastEvent_.get();
-  fStream[0].fOutput->produce(*eventPtr,fSetup);
-  void* iInput = reinterpret_cast<void*>(fStream[0].fOutput->getOutput());
+  //auto eventPtr = fSource->lastEvent_.get();
+  //fStream[0].fOutput->produce(*eventPtr,fSetup);
+  void* iInput = new void*[500000];//reinterpret_cast<void*>(fStream[0].fOutput->getOutput());
   return iInput;
 }
-/*
-oid SiPixelRecHitCUDA::produce(edm::Event& iEvent, const edm::EventSetup& es) {
-  PixelCPEFast const& fcpe = es.get<PixelCPEFast>();
-
-  auto const& pclusters = iEvent.get(token_);
-  cms::cuda::ScopedContextProduce ctx{pclusters};
-
-  auto const& clusters = ctx.get(pclusters);
-  auto const& digis = ctx.get(iEvent, tokenDigi_);
-  auto const& bs = ctx.get(iEvent, tBeamSpot);
-
-  auto nHits = clusters.nClusters();
-  if (nHits >= TrackingRecHit2DSOAView::maxHits()) {
-    std::cout << "Clusters/Hits Overflow " << nHits << " >= " << TrackingRecHit2DSOAView::maxHits() << std::endl;
-  }
-
-  ctx.emplace(iEvent,
-              tokenHit_,
-              gpuAlgo_.makeHitsAsync(digis, clusters, bs, fcpe.getGPUProductAsync(ctx.stream()), ctx.stream()));
+uint32_t BSTest::getSize()  { 
+  return  fStream[0].fOutput->getSize();
 }
-
-*/
