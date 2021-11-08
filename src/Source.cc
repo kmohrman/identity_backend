@@ -45,20 +45,25 @@ namespace edm {
   std::shared_ptr<Event> Source::produce(int streamId, ProductRegistry const &reg) {
     const int old = numEvents_.fetch_add(1);
     const int count = fCount_.fetch_sub(1);
-    if(count < 0) {
+    if(count < 1) {
       fCount_=0;
       return nullptr;
     }
     if (old >= int(raw_.size())) {
       numEvents_ = 0;
     }
-    lastEvent_ = std::make_unique<Event>(streamId, old, reg);
+    std::shared_ptr<Event> lastEvent_ = std::make_unique<Event>(streamId, old, reg);
     const int index = old  % raw_.size();
     lastEvent_->emplace(rawToken_, raw_[index]);
+    lastEvents_.push_back(lastEvent_);
     return lastEvent_;
   }
 
   void  Source::fill(const void* input_buffer,bool iClear)  {
     fCount_.fetch_add(1);
+    if(iClear) clear();
+  }
+  void  Source::clear() { 
+    lastEvents_.clear();
   }
 }  // namespace edm

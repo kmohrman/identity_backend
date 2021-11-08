@@ -550,7 +550,7 @@ TRITONBACKEND_ModelInstanceInitialize(TRITONBACKEND_ModelInstance* instance)
 		"SiPixelGainCalibrationForHLTGPUESProducer",
 		"SiPixelROCsStatusAndMappingWrapperESProducer",
 		"PixelCPEFastESProducer"};
-  lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA","SiPixelDigiErrorsSoAFromCUDA", "SiPixelRecHitFromCUDA","CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA"};
+  lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA","SiPixelDigiErrorsSoAFromCUDA", "SiPixelRecHitFromCUDA","CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA","CountValidatorSimple"};
   model_state->fBSTest->setItAll(0,lESModules,lEDModules);
   return nullptr;  // success
 }
@@ -580,75 +580,26 @@ TRITONSERVER_Error*
 TRITONBACKEND_ModelInstanceExecute(
     TRITONBACKEND_ModelInstance* instance, TRITONBACKEND_Request** requests,
     const uint32_t request_count) {
-  // Triton will not call this function simultaneously for the same
-  // 'instance'. But since this backend could be used by multiple
-  // instances from multiple models the implementation needs to handle
-  // multiple calls to this function at the same time (with different
-  // 'instance' objects). Suggested practice for this is to use only
-  // function-local and model-instance-specific state (obtained from
-  // 'instance'), which is what we do here.
+
+  
   ModelInstanceState* instance_state;
   RETURN_IF_ERROR(TRITONBACKEND_ModelInstanceState(
       instance, reinterpret_cast<void**>(&instance_state)));
   ModelState* model_state = instance_state->StateForModel();
 
-  // This backend specifies BLOCKING execution policy. That means that
-  // we should not return from this function until execution is
-  // complete. Triton will automatically release 'instance' on return
-  // from this function so that it is again available to be used for
-  // another call to TRITONBACKEND_ModelInstanceExecute.
-
-  //  LOG_MESSAGE(
-  //    TRITONSERVER_LOG_INFO,
-  //    (std::string("model ") + model_state->Name() + ", instance " +
-  //     instance_state->Name() + ", executing " + std::to_string(request_count) +
-  //     " requests")
-  //        .c_str());
-  //bool supports_batching = false;
-  // RETURN_IF_ERROR(model_state->SupportsFirstDimBatching(&supports_batching));
-  // 'responses' is initialized with the response objects below and
-  // if/when an error response is sent the corresponding entry in
-  // 'responses' is set to nullptr to indicate that that response has
-  // already been sent.
   std::vector<TRITONBACKEND_Response*> responses;
   responses.reserve(request_count);
-
-  // Create a single response object for each request. If something
-  // goes wrong when attempting to create the response objects just
-  // fail all of the requests by returning an error.
   for (uint32_t r = 0; r < request_count; ++r) {
     TRITONBACKEND_Request* request = requests[r];
     TRITONBACKEND_Response* response;
     RETURN_IF_ERROR(TRITONBACKEND_ResponseNew(&response, request));
     responses.push_back(response);
   }
-
-  // The way we collect these batch timestamps is not entirely
-  // accurate. Normally, in a performant backend you would execute all
-  // the requests at the same time, and so there would be a single
-  // compute-start / compute-end time-range. But here we execute each
-  // request separately so there is no single range. As a result we
-  // just show the entire execute time as being the compute time as
-  // well.
-  //uint64_t min_exec_start_ns = std::numeric_limits<uint64_t>::max();
-  //uint64_t max_exec_end_ns = 0;
-  //uint64_t total_batch_size = 0;
-
-  // After this point we take ownership of 'requests', which means
-  // that a response must be sent for every request. If something does
-  // go wrong in processing a particular request then we send an error
-  // response just for the specific request.
-
-  // For simplicity we just process each request separately... in
-  // general a backend should try to operate on the entire batch of
-  // requests at the same time for improved performance.
+  const char* requested_output_name = nullptr;
+  const int64_t* input_shape;
+  uint32_t requested_output_count = 0;
   for (uint32_t r = 0; r < request_count; ++r) {
-    //uint64_t exec_start_ns = 0;
-    //SET_TIMESTAMP(exec_start_ns);
-    //min_exec_start_ns = std::min(min_exec_start_ns, exec_start_ns);
-
     TRITONBACKEND_Request* request = requests[r];
-
     const char* request_id = "";
     GUARDED_RESPOND_IF_ERROR(
         responses, r, TRITONBACKEND_RequestId(request, &request_id));
@@ -657,16 +608,10 @@ TRITONBACKEND_ModelInstanceExecute(
     GUARDED_RESPOND_IF_ERROR(
         responses, r,
         TRITONBACKEND_RequestCorrelationId(request, &correlation_id));
-
-    // Triton ensures that there is only a single input since that is
-    // what is specified in the model configuration, so normally there
-    // would be no reason to check it but we do here to demonstate the
-    // API.
     uint32_t input_count = 0;
     GUARDED_RESPOND_IF_ERROR(
         responses, r, TRITONBACKEND_RequestInputCount(request, &input_count));
 
-    uint32_t requested_output_count = 0;
     GUARDED_RESPOND_IF_ERROR(
         responses, r,
         TRITONBACKEND_RequestOutputCount(request, &requested_output_count));
@@ -682,14 +627,6 @@ TRITONBACKEND_ModelInstanceExecute(
       continue;
     }
 
-    //LOG_MESSAGE(
-    //    TRITONSERVER_LOG_INFO,
-    //    (std::string("request ") + std::to_string(r) + ": id = \"" +
-    //     request_id + "\", correlation_id = " + std::to_string(correlation_id) +
-    //     ", input_count = " + std::to_string(input_count) +
-    //     ", requested_output_count = " + std::to_string(requested_output_count))
-    //        .c_str());
-
     const char* input_name;
     GUARDED_RESPOND_IF_ERROR(
         responses, r,
@@ -702,7 +639,6 @@ TRITONBACKEND_ModelInstanceExecute(
     // We also validated that the model configuration specifies only a
     // single output, but the request is not required to request any
     // output at all so we only produce an output if requested.
-    const char* requested_output_name = nullptr;
     if (requested_output_count > 0) {
       GUARDED_RESPOND_IF_ERROR(
           responses, r,
@@ -724,7 +660,6 @@ TRITONBACKEND_ModelInstanceExecute(
     }
 
     TRITONSERVER_DataType input_datatype;
-    const int64_t* input_shape;
     uint32_t input_dims_count;
     uint64_t input_byte_size;
     uint32_t input_buffer_count;
@@ -747,61 +682,29 @@ TRITONBACKEND_ModelInstanceExecute(
     TRITONSERVER_MemoryType input_memory_type = TRITONSERVER_MEMORY_CPU;
     int64_t input_memory_type_id = 0;
     GUARDED_RESPOND_IF_ERROR(
-			     responses, r,
-			     TRITONBACKEND_InputBuffer(
-						       input, 0, &input_buffer, &buffer_byte_size, &input_memory_type,
-						       &input_memory_type_id));
+        responses, r,
+	TRITONBACKEND_InputBuffer(
+				  input, 0, &input_buffer, &buffer_byte_size, &input_memory_type,
+				  &input_memory_type_id));
     if ((responses[r] == nullptr) ||
 	(input_memory_type == TRITONSERVER_MEMORY_GPU)) {
       GUARDED_RESPOND_IF_ERROR(
-			       responses, r,
-			       TRITONSERVER_ErrorNew(
-						     TRITONSERVER_ERROR_UNSUPPORTED,
-						     "failed to get input buffer in CPU memory"));
+	responses, r,
+	TRITONSERVER_ErrorNew(
+			      TRITONSERVER_ERROR_UNSUPPORTED,
+			      "failed to get input buffer in CPU memory"));
     }
     model_state->fBSTest->fillSource(input_buffer,true);
     for(unsigned int i0 = 1; i0 < input_shape[0]; i0++) model_state->fBSTest->fillSource(input_buffer,false);
-    
-    //LOG_MESSAGE(
-    //    TRITONSERVER_LOG_INFO,
-    //    (std::string("\tinput ") + input_name +
-    //     ": datatype = " + TRITONSERVER_DataTypeString(input_datatype) +
-    //     ", shape = " + backend::ShapeToString(input_shape, input_dims_count) +
-    //     ", byte_size = " + std::to_string(input_byte_size) +
-    //     ", buffer_count = " + std::to_string(input_buffer_count))
-    //        .c_str());
-    //LOG_MESSAGE(
-    //    TRITONSERVER_LOG_INFO,
-    //    (std::string("\trequested_output ") + requested_output_name).c_str());
-
-    // For statistics we need to collect the total batch size of all
-    // the requests. If the model doesn't support batching then each
-    // request is necessarily batch-size 1. If the model does support
-    // batching then the first dimension of the shape is the batch
-    // size.
-    /*
-    if (supports_batching && (input_dims_count > 0)) {
-      total_batch_size += input_shape[0];
-    } else {
-      total_batch_size++;
-    }
-    */
-    // We only need to produce an output if it was requested.
-    if (requested_output_count > 0) {
-      // This backend simply copies the input tensor to the output
-      // tensor. The input tensor contents are available in one or
-      // more contiguous buffers. To do the copy we:
-      //
-      //   1. Create an output tensor in the response.
-      //
-      //   2. Allocate appropriately sized buffer in the output
-      //      tensor.
-      //
-      //   3. Iterate over the input tensor buffers and copy the
-      //      contents into the output buffer.
+  }
+  if (requested_output_count > 0) {
+    //std::cout << "--> batch " << input_shape[0] << " -dbatch- " << request_count << std::endl;
+    const void** output_tmp = model_state->fBSTest->getOutput();
+    uint64_t*   size  = model_state->fBSTest->getSize();
+    for (uint32_t r = 0; r < request_count; ++r) { //This shoudl have the batch in it too!
+      TRITONBACKEND_Request* request = requests[r];
       TRITONBACKEND_Response* response = responses[r];
-      void* output_tmp = model_state->fBSTest->getOutput();
-      uint64_t output_buffer_byte_size = 50;//model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
+      uint64_t output_buffer_byte_size = size[r];
       int64_t* output_shape = new int64_t[2];
       output_shape[0] =  input_shape[0];
       output_shape[1] = output_buffer_byte_size;
@@ -821,7 +724,6 @@ TRITONBACKEND_ModelInstanceExecute(
                 .c_str());
         continue;
       }
-
       // Step 2. Get the output buffer. We request a buffer in CPU
       // memory but we have to handle any returned type. If we get
       // back a buffer in GPU memory we just fail the request.
@@ -848,7 +750,7 @@ TRITONBACKEND_ModelInstanceExecute(
                 .c_str());
         continue;
       }
-      memcpy(output_buffer,output_tmp,output_buffer_byte_size);
+      memcpy(output_buffer,output_tmp[r],output_buffer_byte_size);
       if (responses[r] == nullptr) {
         LOG_MESSAGE(
             TRITONSERVER_LOG_ERROR,
@@ -858,12 +760,6 @@ TRITONBACKEND_ModelInstanceExecute(
                 .c_str());
         continue;
       }
-    }
-    // If we get to this point then there hasn't been any error and
-    // the response is complete and we can send it. This is the last
-    // (and only) response that we are sending for the request so we
-    // must mark it FINAL. If there is an error when sending all we
-    // can do is log it.
     LOG_IF_ERROR(
         TRITONBACKEND_ResponseSend(
             responses[r], TRITONSERVER_RESPONSE_COMPLETE_FINAL,
@@ -874,61 +770,8 @@ TRITONBACKEND_ModelInstanceExecute(
     LOG_IF_ERROR(
         TRITONBACKEND_RequestRelease(request, TRITONSERVER_REQUEST_RELEASE_ALL),
         "failed releasing request");
-
-    //uint64_t exec_end_ns = 0;
-    //SET_TIMESTAMP(exec_end_ns);
-    //max_exec_end_ns = std::max(max_exec_end_ns, exec_end_ns);
-
-    // Report statistics for the successful request. For an instance
-    // using the CPU we don't associate any device with the
-    // statistics, otherwise we associate the instance's device.
-    //LOG_IF_ERROR(
-    //    TRITONBACKEND_ModelInstanceReportStatistics(
-    //        instance_state->TritonModelInstance(), request, true /* success */,
-    //        exec_start_ns, exec_start_ns, exec_end_ns, exec_end_ns),
-    //    "failed reporting request statistics");
+    }
   }
-  // Done with requests...
-
-  // There are two types of statistics that we can report... the
-  // statistics for the entire batch of requests that we just executed
-  // and statistics for each individual request. Statistics for each
-  // individual request were reported above inside the loop as each
-  // request was processed (or for failed requests we report that
-  // failure below). Here we report statistics for the entire batch of
-  // requests.
-  
-  //LOG_IF_ERROR(
-  //     TRITONBACKEND_ModelInstanceReportBatchStatistics(
-  //         instance_state->TritonModelInstance(), total_batch_size,
-  //         min_exec_start_ns, min_exec_start_ns, max_exec_end_ns,
-  //        max_exec_end_ns),
-  //    "failed reporting batch request statistics");
-
-  // We could have released each request as soon as we sent the
-  // corresponding response. But for clarity we just release them all
-  // here. Note that is something goes wrong when releasing a request
-  // all we can do is log it... there is no response left to use to
-  // report an error.
-  
-  //for (uint32_t r = 0; r < request_count; ++r) {
-  //  TRITONBACKEND_Request* request = requests[r];
-
-    // Before releasing, record failed requests as those where
-    // responses[r] is nullptr. The timestamps are ignored in this
-    // case.
-  //    if (responses[r] == nullptr) {
-  //     LOG_IF_ERROR(
-  //         TRITONBACKEND_ModelInstanceReportStatistics(
-  //            instance_state->TritonModelInstance(), request,
-  //            false /* success */, 0, 0, 0, 0),
-  //        "failed reporting request statistics");
-  //  }
-
-  //    LOG_IF_ERROR(
-  //      TRITONBACKEND_RequestRelease(request, TRITONSERVER_REQUEST_RELEASE_ALL),
-  //      "failed releasing request");
-  //}
   return nullptr;  // success
 }
 

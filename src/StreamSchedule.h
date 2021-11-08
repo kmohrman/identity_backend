@@ -42,10 +42,10 @@ namespace edm {
     //uint32_t processOneEvent(WaitingTaskHolder h);
     void processOneEventAsync(WaitingTaskHolder h);
     CountValidatorSimple* fOutput;
-    
-  private:
 
     ProductRegistry registry_;
+  private:
+
     Source* source_;
     EventSetup const* eventSetup_;
     std::vector<std::unique_ptr<Worker>> path_;

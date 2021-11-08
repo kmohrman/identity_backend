@@ -18,7 +18,8 @@ namespace edm {
     // thread safe
     std::shared_ptr<Event> produce(int streamId, ProductRegistry const& reg);
     void  fill(const void* input_buffer,bool iClear);
-    std::shared_ptr<Event> lastEvent_;
+    void clear();
+    std::vector<std::shared_ptr<Event>> lastEvents_;
 
   private:
     int maxEvents_;
