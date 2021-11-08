@@ -65,9 +65,9 @@ void* BSTest::getOutput() {
   if (globalWaitTask->exceptionPtr()) {
     std::rethrow_exception(*(globalWaitTask->exceptionPtr()));
   }
-  //auto eventPtr = fSource->lastEvent_.get();
-  //fStream[0].fOutput->produce(*eventPtr,fSetup);
-  void* iInput = new void*[500000];//reinterpret_cast<void*>(fStream[0].fOutput->getOutput());
+  auto eventPtr = fSource->lastEvent_.get();
+  fStream[0].fOutput->produce(*eventPtr,fSetup);
+  void* iInput = reinterpret_cast<void*>(fStream[0].fOutput->getOutput());
   return iInput;
 }
 uint64_t BSTest::getSize()  { 

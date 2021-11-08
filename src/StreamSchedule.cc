@@ -37,9 +37,9 @@ namespace edm {
       path_.back()->setItemsToGet(std::move(consumes));
       ++modInd;
     }
-    //pluginManager.load("CountValidatorSimple");
-    //registry_.beginModuleConstruction(modInd);
-    //fOutput = new CountValidatorSimple(registry_);
+    pluginManager.load("CountValidatorSimple");
+    registry_.beginModuleConstruction(modInd);
+    fOutput = new CountValidatorSimple(registry_);
   }
 
   StreamSchedule::~StreamSchedule() = default;

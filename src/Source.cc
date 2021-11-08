@@ -45,7 +45,7 @@ namespace edm {
   std::shared_ptr<Event> Source::produce(int streamId, ProductRegistry const &reg) {
     const int old = numEvents_.fetch_add(1);
     const int count = fCount_.fetch_sub(1);
-    if(count < 0) {
+    if(count < 1) {
       fCount_=0;
       return nullptr;
     }
