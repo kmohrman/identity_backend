@@ -22,13 +22,11 @@ namespace {
 }  // namespace
 
 class CountValidatorSimple : public edm::EDProducer {
-//class CountValidatorSimple : public edm::EDProducerExternalWork {
 public:
   explicit CountValidatorSimple(edm::ProductRegistry& reg);
-  uint8_t* getOutput();
+  int8_t* getOutput();
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
-  //void acquire(const edm::Event& iEvent,const edm::EventSetup& iSetup,edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
-  uint32_t getSize();
+  uint64_t getSize();
   
   using HMSstorage = HostProduct<uint32_t[]>;
   
@@ -41,15 +39,9 @@ private:
   edm::EDGetTokenT<cms::cuda::Product<SiPixelClustersCUDA>> clusterToken_;
   edm::EDGetTokenT<PixelTrackHeterogeneous> trackToken_;
   edm::EDGetTokenT<ZVertexHeterogeneous> vertexToken_;
-  uint32_t  nDigis_;
-  uint32_t  nErrors_;
-  uint32_t  nHits_;
-  cms::cuda::host::unique_ptr<uint32_t[]> pdigi_;
-  cms::cuda::host::unique_ptr<uint32_t[]> rawIdArr_;
-  cms::cuda::host::unique_ptr<uint16_t[]> adc_;
-  cms::cuda::host::unique_ptr<int32_t[]>  clus_;
-  uint32_t size_;
-  uint8_t* output_;
+
+  uint64_t size_;
+  int8_t* output_;
   bool suppressDigis_;
   bool suppressTracks_;
 };
@@ -63,28 +55,20 @@ CountValidatorSimple::CountValidatorSimple(edm::ProductRegistry& reg)
     vertexToken_(reg.consumes<ZVertexHeterogeneous>()),
     suppressDigis_(false),
     suppressTracks_(true){
-  output_ = new uint8_t[7200000];
+  output_ = new int8_t[7200000];
 }
-
-
-/*
-void CountValidatorSimple::acquire(const edm::Event& iEvent,
-                             const edm::EventSetup& iSetup,
-                             edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
-
-  cms::cuda::ScopedContextAcquire ctx{iEvent.streamID(), std::move(waitingTaskHolder)};
-  const auto& digis = ctx.get(iEvent, digiToken_);
-  pdigi_     = digis.pdigiToHostAsync(ctx.stream());
-  rawIdArr_  = digis.rawIdArrToHostAsync(ctx.stream());
-  adc_       = digis.adcToHostAsync(ctx.stream());
-  clus_      = digis.clusToHostAsync(ctx.stream());
-}
-*/
-
 void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   unsigned int pCount = 0;
   {
 
+    uint32_t  nDigis_;
+    uint32_t  nErrors_;
+    uint32_t  nHits_;
+    cms::cuda::host::unique_ptr<uint32_t[]> pdigi_;
+    cms::cuda::host::unique_ptr<uint32_t[]> rawIdArr_;
+    cms::cuda::host::unique_ptr<uint16_t[]> adc_;
+    cms::cuda::host::unique_ptr<int32_t[]>  clus_;
+    
     auto const& hits = iEvent.get(hitsToken_);
     nHits_ = hits.get()[0];
     if(nHits_ > 35000) std::cout << "----> Too many Hits #Hits  " << nHits_ << " Max! 35000 " << std::endl;
@@ -196,7 +180,6 @@ void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iS
 	for(int i1 = 0; i1 < 15; i1++) { 
 	  stateAtBSCov[i1*pSize + pInt] = tracks->stateAtBS.covariance(i0)(i1);
 	}
-	//std::memcpy(stateAtBSCov+pInt*15,tracks->stateAtBS.covariance(0).data()+i0*15,sizeof(float)*15);
 	uint32_t pHit = tracks->hitIndices.size(i0);
 	uint32_t pDet = tracks->detIndices.size(i0);
 	std::memcpy(hitsRaw + pHitCheck,tracks->hitIndices.begin() + tracks->hitIndices.off.data()[i0],sizeof(uint32_t)*pHit);
@@ -266,10 +249,10 @@ void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iS
   }
   size_ = pCount;
 }
-uint8_t* CountValidatorSimple::getOutput() {
+int8_t* CountValidatorSimple::getOutput() {
   return output_;
 }
-uint32_t CountValidatorSimple::getSize() {
+uint64_t CountValidatorSimple::getSize() {
   return size_;
 }
 void CountValidatorSimple::endJob() {

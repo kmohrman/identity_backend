@@ -30,8 +30,6 @@
 #include "loadbs.cc"
 //#include "vector_add.cu"
 
-BSTest* fBSTest;
-
 namespace triton { namespace backend { namespace identity {
  
 //
@@ -92,7 +90,8 @@ class ModelState {
   // Block the thread for seconds specified in 'creation_delay_sec' parameter.
   // This function is used for testing.
   TRITONSERVER_Error* CreationDelay();
-
+  BSTest* fBSTest;
+  
  private:
   ModelState(
       TRITONSERVER_Server* triton_server, TRITONBACKEND_Model* triton_model,
@@ -101,6 +100,8 @@ class ModelState {
 
   TRITONSERVER_Server* triton_server_;
   TRITONBACKEND_Model* triton_model_;
+  
+
   const std::string name_;
   const uint64_t version_;
   common::TritonJson::Value model_config_;
@@ -542,17 +543,15 @@ TRITONBACKEND_ModelInstanceInitialize(TRITONBACKEND_ModelInstance* instance)
       TRITONSERVER_ERROR_INVALID_ARG,
       std::string("'identity' backend only supports CPU instances"));
 
-  fBSTest = new BSTest("data/beamspot.bin");
+  model_state->fBSTest = new BSTest("data/beamspot.bin");
   std::vector<std::string> lESModules;
   std::vector<std::string> lEDModules;
   lESModules = {"BeamSpotESProducer",
 		"SiPixelGainCalibrationForHLTGPUESProducer",
 		"SiPixelROCsStatusAndMappingWrapperESProducer",
 		"PixelCPEFastESProducer"};
-  //lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA","SiPixelDigiErrorsSoAFromCUDA", "SiPixelRecHitFromCUDA", "CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA"};//,"CountValidatorSimple"};
-  lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA","SiPixelDigiErrorsSoAFromCUDA", "SiPixelRecHitFromCUDA","CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA","CountValidatorSimple"};
-  fBSTest->setItAll(0,lESModules,lEDModules);
-  
+  lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA","SiPixelDigiErrorsSoAFromCUDA", "SiPixelRecHitFromCUDA","CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA"};
+  model_state->fBSTest->setItAll(0,lESModules,lEDModules);
   return nullptr;  // success
 }
 
@@ -580,8 +579,7 @@ TRITONBACKEND_ModelInstanceFinalize(TRITONBACKEND_ModelInstance* instance)
 TRITONSERVER_Error*
 TRITONBACKEND_ModelInstanceExecute(
     TRITONBACKEND_ModelInstance* instance, TRITONBACKEND_Request** requests,
-    const uint32_t request_count)
-{
+    const uint32_t request_count) {
   // Triton will not call this function simultaneously for the same
   // 'instance'. But since this backend could be used by multiple
   // instances from multiple models the implementation needs to handle
@@ -592,7 +590,7 @@ TRITONBACKEND_ModelInstanceExecute(
   ModelInstanceState* instance_state;
   RETURN_IF_ERROR(TRITONBACKEND_ModelInstanceState(
       instance, reinterpret_cast<void**>(&instance_state)));
-  //ModelState* model_state = instance_state->StateForModel();
+  ModelState* model_state = instance_state->StateForModel();
 
   // This backend specifies BLOCKING execution policy. That means that
   // we should not return from this function until execution is
@@ -761,8 +759,8 @@ TRITONBACKEND_ModelInstanceExecute(
 						     TRITONSERVER_ERROR_UNSUPPORTED,
 						     "failed to get input buffer in CPU memory"));
     }
-    fBSTest->fillSource(input_buffer,true);
-    for(unsigned int i0 = 1; i0 < input_shape[0]; i0++) fBSTest->fillSource(input_buffer,false);
+    model_state->fBSTest->fillSource(input_buffer,true);
+    for(unsigned int i0 = 1; i0 < input_shape[0]; i0++) model_state->fBSTest->fillSource(input_buffer,false);
     
     //LOG_MESSAGE(
     //    TRITONSERVER_LOG_INFO,
@@ -802,8 +800,8 @@ TRITONBACKEND_ModelInstanceExecute(
       //   3. Iterate over the input tensor buffers and copy the
       //      contents into the output buffer.
       TRITONBACKEND_Response* response = responses[r];
-      void* output_tmp = fBSTest->getOutput();
-      uint64_t output_buffer_byte_size = 50;//fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
+      void* output_tmp = model_state->fBSTest->getOutput();
+      uint64_t output_buffer_byte_size = 50;//model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
       int64_t* output_shape = new int64_t[2];
       output_shape[0] =  input_shape[0];
       output_shape[1] = output_buffer_byte_size;
@@ -872,6 +870,11 @@ TRITONBACKEND_ModelInstanceExecute(
             nullptr /* success */),
         "failed sending response");
 
+
+    LOG_IF_ERROR(
+        TRITONBACKEND_RequestRelease(request, TRITONSERVER_REQUEST_RELEASE_ALL),
+        "failed releasing request");
+
     //uint64_t exec_end_ns = 0;
     //SET_TIMESTAMP(exec_end_ns);
     //max_exec_end_ns = std::max(max_exec_end_ns, exec_end_ns);
@@ -907,24 +910,25 @@ TRITONBACKEND_ModelInstanceExecute(
   // here. Note that is something goes wrong when releasing a request
   // all we can do is log it... there is no response left to use to
   // report an error.
-  for (uint32_t r = 0; r < request_count; ++r) {
-    TRITONBACKEND_Request* request = requests[r];
+  
+  //for (uint32_t r = 0; r < request_count; ++r) {
+  //  TRITONBACKEND_Request* request = requests[r];
 
     // Before releasing, record failed requests as those where
     // responses[r] is nullptr. The timestamps are ignored in this
     // case.
-    if (responses[r] == nullptr) {
-      LOG_IF_ERROR(
-          TRITONBACKEND_ModelInstanceReportStatistics(
-              instance_state->TritonModelInstance(), request,
-              false /* success */, 0, 0, 0, 0),
-          "failed reporting request statistics");
-    }
+  //    if (responses[r] == nullptr) {
+  //     LOG_IF_ERROR(
+  //         TRITONBACKEND_ModelInstanceReportStatistics(
+  //            instance_state->TritonModelInstance(), request,
+  //            false /* success */, 0, 0, 0, 0),
+  //        "failed reporting request statistics");
+  //  }
 
-    LOG_IF_ERROR(
-        TRITONBACKEND_RequestRelease(request, TRITONSERVER_REQUEST_RELEASE_ALL),
-        "failed releasing request");
-  }
+  //    LOG_IF_ERROR(
+  //      TRITONBACKEND_RequestRelease(request, TRITONSERVER_REQUEST_RELEASE_ALL),
+  //      "failed releasing request");
+  //}
   return nullptr;  // success
 }
 
