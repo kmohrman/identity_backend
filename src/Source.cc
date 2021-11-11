@@ -52,6 +52,7 @@ namespace edm {
     if (old >= int(raw_.size())) {
       numEvents_ = 0;
     }
+    lastEvent_.reset();
     lastEvent_ = std::make_unique<Event>(streamId, old, reg);
     const int index = old  % raw_.size();
     lastEvent_->emplace(rawToken_, raw_[index]);

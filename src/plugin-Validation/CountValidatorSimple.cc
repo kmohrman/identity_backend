@@ -60,7 +60,6 @@ CountValidatorSimple::CountValidatorSimple(edm::ProductRegistry& reg)
 void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   unsigned int pCount = 0;
   {
-
     uint32_t  nDigis_;
     uint32_t  nErrors_;
     uint32_t  nHits_;
@@ -158,8 +157,8 @@ void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iS
     uint8_t quality[pSize];
     float   eta    [pSize];
     float   pt     [pSize];
-    float *stateAtBS = new float[pSize*5];
-    float *stateAtBSCov = new float[pSize*15];
+    float stateAtBS[pSize*5];
+    float stateAtBSCov[pSize*15];
     uint32_t *hitsRaw = new uint32_t[pSize*5];
     int32_t  hitsOff[pSize+1];
     uint32_t *detsRaw = new uint32_t[pSize*5];
@@ -210,7 +209,9 @@ void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iS
     std::memcpy(output_ + pCount,hitsOff,    (nTracks+1)*sizeof(int32_t));        pCount+=4*(nTracks+1);
     std::memcpy(output_ + pCount,detsRaw,    5*nTracks*sizeof(uint32_t));         pCount+=4*nTracks*5;
     std::memcpy(output_ + pCount,detsOff,    (nTracks+1)*sizeof(int32_t));        pCount+=4*(nTracks+1);
-
+    delete hitsRaw;
+    delete detsRaw;
+    
     uint32_t nVtx = vertices->nvFinal;
     std::memcpy(output_ + pCount,&(vertices->nvFinal),sizeof(uint32_t)); pCount += 4;
     std::memcpy(output_ + pCount,idv              ,nTracks*sizeof(int16_t));   pCount+=2*nTracks;
