@@ -16,7 +16,6 @@ namespace edm {
 
     int maxEvents() const { return maxEvents_; }
 
-    void fill_fromstream(int streamId, ProductRegistry const &reg,char* iRaw);
     // thread safe
     std::shared_ptr<Event> produce(int streamId, ProductRegistry const& reg);
     void  fill(const void* input_buffer,bool iClear);
@@ -31,7 +30,6 @@ namespace edm {
     EDPutTokenT<FEDRawDataCollection> const rawToken_;
     EDPutTokenT<BeamSpotPOD> beamSpotPODToken_;
     std::vector<std::pair<FEDRawDataCollection,BeamSpotPOD> > raw_;
-    //std::vector<BeamSpotPOD> rawBS_;
   };
 }  // namespace edm
 
