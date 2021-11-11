@@ -698,7 +698,6 @@ TRITONBACKEND_ModelInstanceExecute(
     for(unsigned int i0 = 1; i0 < input_shape[0]; i0++) model_state->fBSTest->fillSource(input_buffer,false);
   }
   if (requested_output_count > 0) {
-    //std::cout << "--> batch " << input_shape[0] << " -dbatch- " << request_count << std::endl;
     const void** output_tmp = model_state->fBSTest->getOutput();
     uint64_t*   size  = model_state->fBSTest->getSize();
     for (uint32_t r = 0; r < request_count; ++r) { //This shoudl have the batch in it too!
