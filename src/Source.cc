@@ -7,20 +7,6 @@
 #include "Source.h"
 
 namespace {
-  FEDRawDataCollection readRaw(std::ifstream &is, unsigned int nfeds) {
-    FEDRawDataCollection rawCollection;
-    for (unsigned int ifed = 0; ifed < nfeds; ++ifed) {
-      unsigned int fedId;
-      is.read(reinterpret_cast<char *>(&fedId), sizeof(unsigned int));
-      unsigned int fedSize;
-      is.read(reinterpret_cast<char *>(&fedSize), sizeof(unsigned int));
-      FEDRawData &rawData = rawCollection.FEDData(fedId);
-      rawData.resize(fedSize);
-      is.read(reinterpret_cast<char *>(rawData.data()), fedSize);
-    }
-    return rawCollection;
-  }
-
   //FEDRawDataCollection
   std::pair<FEDRawDataCollection,BeamSpotPOD> readRawBuff(const void* input_buffer) { //, unsigned int nfeds) {
     BeamSpotPOD bs;

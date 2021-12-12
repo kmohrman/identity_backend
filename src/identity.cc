@@ -739,10 +739,9 @@ TRITONBACKEND_ModelInstanceExecute(
       TRITONBACKEND_Response* response = responses[r];
       void* output_tmp = model_state->fBSTest->getOutput();
       uint64_t output_buffer_byte_size = model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
-      int64_t* output_shape = new int64_t[2];
-      output_shape[0] =  input_shape[0];
-      output_shape[1] = output_buffer_byte_size;
-      uint32_t output_dims_count = 2;
+      int64_t* output_shape = new int64_t[1];
+      output_shape[0] = output_buffer_byte_size;
+      uint32_t output_dims_count = 1;
       // Step 1. Input and output have same datatype and shape...
       TRITONBACKEND_Output* output;
       GUARDED_RESPOND_IF_ERROR(
