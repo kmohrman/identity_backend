@@ -27,7 +27,7 @@
 #include <memory>
 #include <thread>
 #include "triton/backend/backend_common.h"
-#include <tbb/task_scheduler_init.h>
+//#include <tbb/task_scheduler_init.h>
 #include "loadbs.cc"
 //#include "vector_add.cu"
 
@@ -607,7 +607,7 @@ TRITONBACKEND_ModelInstanceExecute(
   // For simplicity we just process each request separately... in
   // general a backend should try to operate on the entire batch of
   // requests at the same time for improved performance.
-  tbb::task_scheduler_init tsi(3);
+  //tbb::task_scheduler_init tsi(3);
   for (uint32_t r = 0; r < request_count; ++r) {
     TRITONBACKEND_Request* request = requests[r];
 
@@ -738,10 +738,12 @@ TRITONBACKEND_ModelInstanceExecute(
       //      contents into the output buffer.
       TRITONBACKEND_Response* response = responses[r];
       void* output_tmp = model_state->fBSTest->getOutput();
-      uint64_t output_buffer_byte_size = model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
-      int64_t* output_shape = new int64_t[1];
-      output_shape[0] = output_buffer_byte_size;
-      uint32_t output_dims_count = 1;
+      uint64_t output_buffer_byte_size = 7200000;//model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
+      int64_t* output_shape = new int64_t[2];
+      //std::cout << " set size --> " << output_buffer_byte_size << std::endl;
+      output_shape[0] = 1;
+      output_shape[1] = output_buffer_byte_size;
+      uint32_t output_dims_count = 2;
       // Step 1. Input and output have same datatype and shape...
       TRITONBACKEND_Output* output;
       GUARDED_RESPOND_IF_ERROR(

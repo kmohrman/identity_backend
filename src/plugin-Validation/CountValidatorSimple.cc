@@ -54,7 +54,7 @@ CountValidatorSimple::CountValidatorSimple(edm::ProductRegistry& reg)
     trackToken_(reg.consumes<PixelTrackHeterogeneous>()),
     vertexToken_(reg.consumes<ZVertexHeterogeneous>()),
     suppressDigis_(false),
-    suppressTracks_(true){
+    suppressTracks_(false){
   output_ = new int8_t[7200000];
 }
 void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
@@ -93,6 +93,7 @@ void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iS
       std::memcpy(output_ + pCount,rawIdArr_.get(),nDigis_*sizeof(uint32_t)); pCount+=4*nDigis_;
       std::memcpy(output_ + pCount,adc_.get()     ,nDigis_*sizeof(uint16_t)); pCount+=2*nDigis_;
       std::memcpy(output_ + pCount,clus_.get()    ,nDigis_*sizeof(int32_t));  pCount+=4*nDigis_;
+      //std::cout << "---> server" << nDigis_ << " -- " << pdigi_[0] << " -- " << rawIdArr_[0] << " -- " << adc_[0] << " -- " << clus_[0] << std::endl;
     } else { 
       uint32_t pOldDigi = 0;
       uint32_t pOldRawId = 0;
@@ -139,6 +140,7 @@ void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iS
       std::memcpy(output_ + pCount,rawIdArr,nDigis_*sizeof(uint32_t)); pCount+=4*nDigis_;
       std::memcpy(output_ + pCount,adc     ,nDigis_*sizeof(uint16_t)); pCount+=2*nDigis_;
       std::memcpy(output_ + pCount,clus    ,nDigis_*sizeof(int32_t));  pCount+=4*nDigis_;
+      //std::cout << "---> server" << nDigis_ << " -- " << pdigi[0] << " -- " << rawIdArr[0] << " -- " << adc[0] << " -- " << clus[0] << std::endl;
     }
 
     auto const& pdigiErrors = iEvent.get(digiErrorToken_);
@@ -248,6 +250,7 @@ void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iS
     std::memcpy(output_ + pCount,vertices->ndof   ,MAXVTX*sizeof(int32_t));      pCount+=4*MAXVTX;
     std::memcpy(output_ + pCount,vertices->sortInd,MAXVTX*sizeof(uint16_t));     pCount+=2*MAXVTX;
   }
+  //std::cout << " ---> CVS size " << pCount << std::endl;
   size_ = pCount;
 }
 int8_t* CountValidatorSimple::getOutput() {
