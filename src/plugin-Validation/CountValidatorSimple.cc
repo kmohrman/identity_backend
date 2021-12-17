@@ -97,10 +97,10 @@ void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iS
     nDigis_    = digis.nDigis();
     if(nDigis_ > 150000) std::cout << "----> Too many Digis #Digis  " << nDigis_ << " Max! " << nDigis_ << std::endl;
     if(nDigis_ > 150000) nDigis_ = 150000;
-    pdigi_     = digis.pdigiToHostAsync(ctx.stream());
-    rawIdArr_  = digis.rawIdArrToHostAsync(ctx.stream());
-    adc_       = digis.adcToHostAsync(ctx.stream());
-    clus_      = digis.clusToHostAsync(ctx.stream());
+    //pdigi_     = digis.pdigiToHostAsync(ctx.stream());
+    //rawIdArr_  = digis.rawIdArrToHostAsync(ctx.stream());
+    //adc_       = digis.adcToHostAsync(ctx.stream());
+    //clus_      = digis.clusToHostAsync(ctx.stream());
     if(!suppressDigis_) { 
       std::memcpy(output_ + pCount,&nDigis_,sizeof(uint32_t)); pCount += 4;
       std::memcpy(output_ + pCount,pdigi_.get()   ,nDigis_*sizeof(uint32_t)); pCount+=4*nDigis_;
