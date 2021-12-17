@@ -44,6 +44,11 @@ private:
   int8_t* output_;
   bool suppressDigis_;
   bool suppressTracks_;
+
+  cms::cuda::host::unique_ptr<uint32_t[]> pdigi_;
+  cms::cuda::host::unique_ptr<uint32_t[]> rawIdArr_;
+  cms::cuda::host::unique_ptr<uint16_t[]> adc_;
+  cms::cuda::host::unique_ptr<int32_t[]>  clus_;
 };
 
 CountValidatorSimple::CountValidatorSimple(edm::ProductRegistry& reg)
@@ -54,7 +59,7 @@ CountValidatorSimple::CountValidatorSimple(edm::ProductRegistry& reg)
     trackToken_(reg.consumes<PixelTrackHeterogeneous>()),
     vertexToken_(reg.consumes<ZVertexHeterogeneous>()),
     suppressDigis_(false),
-    suppressTracks_(false){
+    suppressTracks_(true){
   output_ = new int8_t[7200000];
 }
 void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
@@ -63,10 +68,6 @@ void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iS
     uint32_t  nDigis_;
     uint32_t  nErrors_;
     uint32_t  nHits_;
-    cms::cuda::host::unique_ptr<uint32_t[]> pdigi_;
-    cms::cuda::host::unique_ptr<uint32_t[]> rawIdArr_;
-    cms::cuda::host::unique_ptr<uint16_t[]> adc_;
-    cms::cuda::host::unique_ptr<int32_t[]>  clus_;
     
     auto const& hits = iEvent.get(hitsToken_);
     nHits_ = hits.get()[0];

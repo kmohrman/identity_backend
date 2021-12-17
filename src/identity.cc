@@ -738,7 +738,7 @@ TRITONBACKEND_ModelInstanceExecute(
       //      contents into the output buffer.
       TRITONBACKEND_Response* response = responses[r];
       void* output_tmp = model_state->fBSTest->getOutput();
-      uint64_t output_buffer_byte_size = 7200000;//model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
+      uint64_t output_buffer_byte_size = model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
       int64_t* output_shape = new int64_t[2];
       //std::cout << " set size --> " << output_buffer_byte_size << std::endl;
       output_shape[0] = 1;
@@ -749,7 +749,7 @@ TRITONBACKEND_ModelInstanceExecute(
       GUARDED_RESPOND_IF_ERROR(
           responses, r,
           TRITONBACKEND_ResponseOutput(
-				       response, &output, requested_output_name, TRITONSERVER_TYPE_UINT8,
+				       response, &output, requested_output_name, TRITONSERVER_TYPE_INT8,
 				       output_shape, output_dims_count));
       if (responses[r] == nullptr) {
         LOG_MESSAGE(
@@ -786,6 +786,31 @@ TRITONBACKEND_ModelInstanceExecute(
         continue;
       }
       memcpy(output_buffer,output_tmp,output_buffer_byte_size);
+      /*
+      int8_t *output_buffer2 = new int8_t[output_buffer_byte_size];
+      memcpy(output_buffer2,output_tmp,output_buffer_byte_size);
+
+      
+      uint32_t pdigi_[150000];
+      uint32_t rawIdArr_[150000];
+      uint16_t adc_ [150000];
+      int32_t  clus_[150000];
+      uint32_t hits_[2001];
+      float    pos_ [4*35000];
+
+      unsigned int pCount = 0; 
+      uint32_t nHits = 0;
+      uint32_t nDigis    = 0; //output[pCount]; pCount++;                                                                                                                  
+      std::memcpy(&nHits,output_buffer2+pCount,sizeof(uint32_t)); pCount += 4;
+      std::memcpy(hits_, output_buffer2+pCount,(2000+1)*sizeof(uint32_t));    pCount += 4*(2000+1);
+      std::memcpy(pos_,  output_buffer2+pCount,4*nHits*sizeof(float));         pCount += 4*4*nHits;
+      std::memcpy(&nDigis,output_buffer2+pCount,sizeof(uint32_t)); pCount += 4;
+      std::memcpy(pdigi_,   output_buffer2+pCount,nDigis*sizeof(uint32_t)); pCount += 4*nDigis;
+      std::memcpy(rawIdArr_,output_buffer2+pCount,nDigis*sizeof(uint32_t)); pCount += 4*nDigis;
+      std::memcpy(adc_,     output_buffer2+pCount,nDigis*sizeof(uint16_t)); pCount += 2*nDigis;
+      std::memcpy(clus_,    output_buffer2+pCount,nDigis*sizeof(int32_t));  pCount += 4*nDigis;
+      std::cout << "---> digis " << nDigis  << " --" << pdigi_[0] << " -- " << rawIdArr_[0] << " -- " << adc_[0] << " -- " << adc_[nDigis-1] << " -- " << clus_[0] << " -- " << clus_[1] << " -- " << clus_[nDigis-1] << std::endl;
+      */
       if (responses[r] == nullptr) {
         LOG_MESSAGE(
             TRITONSERVER_LOG_ERROR,
