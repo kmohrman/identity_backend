@@ -21,11 +21,12 @@ namespace {
   std::atomic<int> goodEvents{0};
 }  // namespace
 
-class CountValidatorSimple : public edm::EDProducer {
+class CountValidatorSimple : public edm::EDProducerExternalWork {
 public:
   explicit CountValidatorSimple(edm::ProductRegistry& reg);
   int8_t* getOutput();
   void produce(edm::Event& iEvent, const edm::EventSetup& iSetup) override;
+  void acquire(const edm::Event& iEvent,const edm::EventSetup& iSetup,edm::WaitingTaskWithArenaHolder waitingTaskHolder) override;
   uint64_t getSize();
   
   using HMSstorage = HostProduct<uint32_t[]>;
@@ -62,6 +63,18 @@ CountValidatorSimple::CountValidatorSimple(edm::ProductRegistry& reg)
     suppressTracks_(true){
   output_ = new int8_t[7200000];
 }
+
+void CountValidatorSimple::acquire(const edm::Event& iEvent,
+				   const edm::EventSetup& iSetup,
+				   edm::WaitingTaskWithArenaHolder waitingTaskHolder) {
+  cms::cuda::ScopedContextAcquire ctx{iEvent.streamID(), std::move(waitingTaskHolder)};
+  const auto& digis = ctx.get(iEvent, digiToken_);
+  pdigi_     = digis.pdigiToHostAsync(ctx.stream());
+  rawIdArr_  = digis.rawIdArrToHostAsync(ctx.stream());
+  adc_       = digis.adcToHostAsync(ctx.stream());
+  clus_      = digis.clusToHostAsync(ctx.stream());
+}
+
 void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   unsigned int pCount = 0;
   {
@@ -94,7 +107,7 @@ void CountValidatorSimple::produce(edm::Event& iEvent, const edm::EventSetup& iS
       std::memcpy(output_ + pCount,rawIdArr_.get(),nDigis_*sizeof(uint32_t)); pCount+=4*nDigis_;
       std::memcpy(output_ + pCount,adc_.get()     ,nDigis_*sizeof(uint16_t)); pCount+=2*nDigis_;
       std::memcpy(output_ + pCount,clus_.get()    ,nDigis_*sizeof(int32_t));  pCount+=4*nDigis_;
-      //std::cout << "---> server" << nDigis_ << " -- " << pdigi_[0] << " -- " << rawIdArr_[0] << " -- " << adc_[0] << " -- " << clus_[0] << std::endl;
+      std::cout << "---> server" << nDigis_ << " -- " << pdigi_[0] << " -- " << rawIdArr_[0] << " -- " << adc_[0] << " -- " << clus_[0] << std::endl;
     } else { 
       uint32_t pOldDigi = 0;
       uint32_t pOldRawId = 0;
