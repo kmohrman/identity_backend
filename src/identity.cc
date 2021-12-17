@@ -515,8 +515,7 @@ TRITONBACKEND_ModelInstanceInitialize(TRITONBACKEND_ModelInstance* instance)
 		"SiPixelGainCalibrationForHLTGPUESProducer",
 		"SiPixelROCsStatusAndMappingWrapperESProducer",
 		"PixelCPEFastESProducer"};
-  lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA","SiPixelDigiErrorsSoAFromCUDA", "SiPixelRecHitFromCUDA","CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA"};
-  //"CountValidatorSimple"
+  lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA","SiPixelDigiErrorsSoAFromCUDA", "SiPixelRecHitFromCUDA","CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA","CountValidatorSimple"};
   model_state->fBSTest->setItAll(0,lESModules,lEDModules);
   return nullptr;  // success
 }
@@ -738,7 +737,7 @@ TRITONBACKEND_ModelInstanceExecute(
       //   3. Iterate over the input tensor buffers and copy the
       //      contents into the output buffer.
       TRITONBACKEND_Response* response = responses[r];
-      void* output_tmp = model_state->fBSTest->getOutput();
+      const void* output_tmp = model_state->fBSTest->getOutput();
       uint64_t output_buffer_byte_size = model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
       int64_t* output_shape = new int64_t[2];
       //std::cout << " set size --> " << output_buffer_byte_size << std::endl;
