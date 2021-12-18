@@ -739,11 +739,10 @@ TRITONBACKEND_ModelInstanceExecute(
       TRITONBACKEND_Response* response = responses[r];
       const void* output_tmp = model_state->fBSTest->getOutput();
       uint64_t output_buffer_byte_size = model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
-      int64_t* output_shape = new int64_t[2];
-      //std::cout << " set size --> " << output_buffer_byte_size << std::endl;
-      output_shape[0] = 1;
-      output_shape[1] = output_buffer_byte_size;
-      uint32_t output_dims_count = 2;
+      int64_t* output_shape = new int64_t[1];
+      //output_shape[0] = 1;
+      output_shape[0] = output_buffer_byte_size;
+      uint32_t output_dims_count = 1;
       // Step 1. Input and output have same datatype and shape...
       TRITONBACKEND_Output* output;
       GUARDED_RESPOND_IF_ERROR(
@@ -786,7 +785,7 @@ TRITONBACKEND_ModelInstanceExecute(
         continue;
       }
       memcpy(output_buffer,output_tmp,output_buffer_byte_size);
-
+      /*
       int8_t *output_buffer2 = new int8_t[output_buffer_byte_size];
       memcpy(output_buffer2,output_tmp,output_buffer_byte_size);
 
@@ -810,7 +809,7 @@ TRITONBACKEND_ModelInstanceExecute(
       std::memcpy(adc_,     output_buffer2+pCount,nDigis*sizeof(uint16_t)); pCount += 2*nDigis;
       std::memcpy(clus_,    output_buffer2+pCount,nDigis*sizeof(int32_t));  pCount += 4*nDigis;
       std::cout << "---> digis " << nDigis  << " --" << pdigi_[0] << " -- " << rawIdArr_[0] << " -- " << adc_[0] << " -- " << adc_[nDigis-1] << " -- " << clus_[0] << " -- " << clus_[1] << " -- " << clus_[nDigis-1] << std::endl;
-
+      */
       if (responses[r] == nullptr) {
         LOG_MESSAGE(
             TRITONSERVER_LOG_ERROR,
