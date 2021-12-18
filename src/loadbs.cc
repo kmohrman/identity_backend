@@ -23,13 +23,13 @@
 
 class BSTest  {
 public:
-  explicit BSTest(std::string const& datadir) : data_(datadir) {
+  explicit BSTest(std::string const& datadir) : data_(datadir) { 
     fEvent = std::make_unique<edm::Event>(0, 0, reg_);
   }
   void setItAll(unsigned int iId,std::vector<std::string> const& esproducers,std::vector<std::string> runs);  
-  const void** getOutput();
+  const void* getOutput();
   void fillSource(const void* input_buffer,bool iClear);
-  uint64_t* getSize();
+  uint64_t getSize();
   using OutputStorage = HostProduct<int8_t[]>;
   using SizeStorage   = HostProduct<uint64_t[]>;
 
@@ -41,11 +41,10 @@ private:
   edm::ProductRegistry reg_;
   edmplugin::PluginManager fPluginManager;
   edm::Source *fSource;
-  std::vector<uint64_t> fSizes;
+  uint64_t fSize;
   edm::EDGetTokenT<OutputStorage>   *outputToken_;
   edm::EDGetTokenT<SizeStorage> *sizeToken_;
 };
-
 void BSTest::setItAll(unsigned int iId,std::vector<std::string> const& esproducers,std::vector<std::string> runs) { 
   std::string datadir = "/models/identity_fp32/1/data";
   fSource = new edm::Source(1, reg_, datadir);
@@ -55,14 +54,13 @@ void BSTest::setItAll(unsigned int iId,std::vector<std::string> const& esproduce
     esp->produce(fSetup);
   }
   fStream.emplace_back(reg_,fPluginManager,fSource,&fSetup,iId,runs);
-  std::cout << "---> check " << reg_.size() << std::endl;
   outputToken_ = new edm::EDGetTokenT<OutputStorage>(fStream[0].registry_.consumes<OutputStorage>());
   sizeToken_   = new edm::EDGetTokenT<SizeStorage>(fStream[0].registry_.consumes<SizeStorage>());
 }
 void BSTest::fillSource(const void* input_buffer,bool iClear) {
   fSource->fill(input_buffer,iClear);
 }
-const void** BSTest::getOutput() { 
+const void* BSTest::getOutput() { 
   auto globalWaitTask = edm::make_empty_waiting_task();
   globalWaitTask->increment_ref_count();
   for (auto& s : fStream) {
@@ -73,17 +71,13 @@ const void** BSTest::getOutput() {
   if (globalWaitTask->exceptionPtr()) {
     std::rethrow_exception(*(globalWaitTask->exceptionPtr()));
   }
-  const void** iOutputs = new const void*[fSource->lastEvents_.size()];
-  fSizes.clear();
-  for(unsigned i0 = 0; i0 < fSource->lastEvents_.size(); i0++) { 
-    auto eventPtr = fSource->lastEvents_[i0].get();
-    auto const& output   = eventPtr->get(*outputToken_);
-    iOutputs[i0]  =  reinterpret_cast<const void*>(output.get());
-    auto const& pSize = eventPtr->get(*sizeToken_);
-    fSizes.push_back(pSize.get()[0]);
-  }
-  return iOutputs;
+  auto eventPtr = fSource->lastEvent_.get();
+  auto const& output   = eventPtr->get(*outputToken_);
+  const void* iOutput  =  reinterpret_cast<const void*>(output.get());
+  auto const& pSize = eventPtr->get(*sizeToken_);
+  fSize = pSize.get()[0];
+  return iOutput;
 }
-uint64_t* BSTest::getSize()  { 
-  return  fSizes.data();
+uint64_t BSTest::getSize()  { 
+  return  fSize;
 }
