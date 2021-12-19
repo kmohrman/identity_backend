@@ -27,7 +27,7 @@
 #include <memory>
 #include <thread>
 #include "triton/backend/backend_common.h"
-//#include <tbb/task_scheduler_init.h>
+#include <tbb/task_scheduler_init.h>
 #include "loadbs.cc"
 //#include "vector_add.cu"
 
@@ -607,7 +607,7 @@ TRITONBACKEND_ModelInstanceExecute(
   // For simplicity we just process each request separately... in
   // general a backend should try to operate on the entire batch of
   // requests at the same time for improved performance.
-  //tbb::task_scheduler_init tsi(3);
+  tbb::task_scheduler_init tsi(1);
   for (uint32_t r = 0; r < request_count; ++r) {
     TRITONBACKEND_Request* request = requests[r];
 
