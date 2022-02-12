@@ -41,10 +41,8 @@ namespace cms {
         // If the GPU data has already been filled, we can return it immediately
         if (not data.m_filled.load()) {
           // It wasn't, so need to fill it
-          //std::scoped_lock<std::mutex> lk{data.m_mutex};
-	  std::lock(data.m_mutex);
-	  std::lock_guard<std::mutex> lk{data.m_mutex};
-	  
+          std::scoped_lock<std::mutex> lk{data.m_mutex};
+
           if (data.m_filled.load()) {
             // Other thread marked it filled while we were locking the mutex, so we're free to return it
             return data.m_data;
@@ -99,7 +97,7 @@ namespace cms {
         mutable SharedEventPtr m_event;  // guarded by m_mutex
         // non-null if some thread is already filling (cudaStream_t is just a pointer)
         mutable cudaStream_t m_fillingStream = nullptr;  // guarded by m_mutex
-        mutable std::atomic<bool> m_filled = std::atomic<bool>{false};      // easy check if data has been filled already or not
+        mutable std::atomic<bool> m_filled = false;      // easy check if data has been filled already or not
         mutable T m_data;                                // guarded by m_mutex
       };
 

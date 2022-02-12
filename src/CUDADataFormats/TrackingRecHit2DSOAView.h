@@ -6,7 +6,7 @@
 #include "CUDADataFormats/gpuClusteringConstants.h"
 #include "CUDACore/HistoContainer.h"
 #include "CUDACore/cudaCompat.h"
-#include "Geometry/phase1PixelTopology.h"
+//#include "Geometry/phase1PixelTopology.h"
 #include "CUDADataFormats/SiPixelHitStatus.h"
 
 namespace pixelCPEforGPU {
@@ -20,15 +20,17 @@ public:
 
   using hindex_type = uint32_t;  // if above is <=2^32
 
-  using PhiBinner = cms::cuda::HistoContainer<int16_t, 128, -1, 8 * sizeof(int16_t), hindex_type, 10>;
+  using PhiBinner = cms::cuda::
+    HistoContainer<int16_t, 256, -1, 8 * sizeof(int16_t), hindex_type, pixelTopology::maxLayers>;  //28 for phase2 geometry
 
-  using AverageGeometry = phase1PixelTopology::AverageGeometry;
+  //using AverageGeometry = pixelTopology::AverageGeometry;
 
   template <typename>
   friend class TrackingRecHit2DHeterogeneous;
   friend class TrackingRecHit2DReduced;
 
   __device__ __forceinline__ uint32_t nHits() const { return m_nHits; }
+  __device__ __forceinline__ uint32_t nMaxModules() const { return m_nMaxModules; }
 
   __device__ __forceinline__ float& xLocal(int i) { return m_xl[i]; }
   __device__ __forceinline__ float xLocal(int i) const { return __ldg(m_xl + i); }
@@ -83,8 +85,8 @@ public:
   __device__ __forceinline__ PhiBinner& phiBinner() { return *m_phiBinner; }
   __device__ __forceinline__ PhiBinner const& phiBinner() const { return *m_phiBinner; }
 
-  __device__ __forceinline__ AverageGeometry& averageGeometry() { return *m_averageGeometry; }
-  __device__ __forceinline__ AverageGeometry const& averageGeometry() const { return *m_averageGeometry; }
+  //__device__ __forceinline__ AverageGeometry& averageGeometry() { return *m_averageGeometry; }
+  //__device__ __forceinline__ AverageGeometry const& averageGeometry() const { return *m_averageGeometry; }
 
 private:
   // local coord
@@ -104,7 +106,7 @@ private:
 
   // supporting objects
   // m_averageGeometry is corrected for beam spot, not sure where to host it otherwise
-  AverageGeometry* m_averageGeometry;              // owned by TrackingRecHit2DHeterogeneous
+  //AverageGeometry* m_averageGeometry;              // owned by TrackingRecHit2DHeterogeneous
   pixelCPEforGPU::ParamsOnGPU const* m_cpeParams;  // forwarded from setup, NOT owned
   uint32_t const* m_hitsModuleStart;               // forwarded from clusters
 
@@ -114,6 +116,7 @@ private:
   PhiBinner::index_type* m_phiBinnerStorage;
 
   uint32_t m_nHits;
+  uint32_t m_nMaxModules;
 };
 
 #endif  // CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
