@@ -6,7 +6,7 @@
 #include "CUDADataFormats/gpuClusteringConstants.h"
 #include "CUDACore/HistoContainer.h"
 #include "CUDACore/cudaCompat.h"
-#include "Geometry/phase1PixelTopology.h"
+//#include "Geometry/phase1PixelTopology.h"
 #include "CUDADataFormats/SiPixelHitStatus.h"
 
 namespace pixelCPEforGPU {
@@ -22,7 +22,7 @@ public:
 
   using PhiBinner = cms::cuda::HistoContainer<int16_t, 128, -1, 8 * sizeof(int16_t), hindex_type, 10>;
 
-  using AverageGeometry = phase1PixelTopology::AverageGeometry;
+  //using AverageGeometry = phase1PixelTopology::AverageGeometry;
 
   template <typename>
   friend class TrackingRecHit2DHeterogeneous;
@@ -83,8 +83,8 @@ public:
   __device__ __forceinline__ PhiBinner& phiBinner() { return *m_phiBinner; }
   __device__ __forceinline__ PhiBinner const& phiBinner() const { return *m_phiBinner; }
 
-  __device__ __forceinline__ AverageGeometry& averageGeometry() { return *m_averageGeometry; }
-  __device__ __forceinline__ AverageGeometry const& averageGeometry() const { return *m_averageGeometry; }
+  //__device__ __forceinline__ AverageGeometry& averageGeometry() { return *m_averageGeometry; }
+  //__device__ __forceinline__ AverageGeometry const& averageGeometry() const { return *m_averageGeometry; }
 
 private:
   // local coord
@@ -104,7 +104,7 @@ private:
 
   // supporting objects
   // m_averageGeometry is corrected for beam spot, not sure where to host it otherwise
-  AverageGeometry* m_averageGeometry;              // owned by TrackingRecHit2DHeterogeneous
+  //AverageGeometry* m_averageGeometry;              // owned by TrackingRecHit2DHeterogeneous
   pixelCPEforGPU::ParamsOnGPU const* m_cpeParams;  // forwarded from setup, NOT owned
   uint32_t const* m_hitsModuleStart;               // forwarded from clusters
 
