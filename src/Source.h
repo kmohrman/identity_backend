@@ -26,7 +26,6 @@ namespace edm {
     std::atomic<int> numEvents_;
     int iterEvents_;
     std::atomic<int> fBase_;
-    unsigned int fNFeds;
     EDPutTokenT<FEDRawDataCollection> const rawToken_;
     EDPutTokenT<BeamSpotPOD> beamSpotPODToken_;
     std::vector<std::pair<FEDRawDataCollection,BeamSpotPOD> > raw_;

@@ -34,13 +34,6 @@ namespace edm {
     : maxEvents_(maxEvents), numEvents_(0), iterEvents_(1),fBase_(0),
       rawToken_(reg.produces<FEDRawDataCollection>()),
       beamSpotPODToken_(reg.produces<BeamSpotPOD>()) {
-    std::ifstream in_raw((datadir + "/raw.bin").c_str(), std::ios::binary);
-
-    unsigned int nfeds;
-    in_raw.exceptions(std::ifstream::badbit);
-    in_raw.read(reinterpret_cast<char *>(&nfeds), sizeof(unsigned int));
-    fNFeds = nfeds;
-    //fNFeds = 1;
     if (maxEvents_ < 0) {
       maxEvents_ = raw_.size();
     }
