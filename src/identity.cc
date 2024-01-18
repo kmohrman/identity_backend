@@ -29,6 +29,7 @@
 #include "triton/backend/backend_common.h"
 #include <tbb/task_scheduler_init.h>
 #include "loadbs.cc"
+#include "loadlst.cc"
 //#include "vector_add.cu"
 
 namespace triton { namespace backend { namespace identity {

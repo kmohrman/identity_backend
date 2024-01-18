@@ -1,0 +1,22 @@
+#include "CUDACore/Product.h"
+#include "CUDACore/ScopedContext.h"
+#include "CUDACore/copyAsync.h"
+#include "CUDACore/host_noncached_unique_ptr.h"
+#include "CUDADataFormats/BeamSpotCUDA.h"
+#include "Framework/ProductRegistry.h"
+#include "DataFormats/FEDRawDataCollection.h"
+
+#include "Framework/ESPluginFactory.h"
+#include "Framework/PluginFactory.h"
+#include "Framework/EventSetup.h"
+#include "DataFormats/BeamSpotPOD.h"
+#include "Source.h"
+#include "Source.cc"
+#include "StreamSchedule.h"
+#include "StreamSchedule.cc"
+#include <chrono>
+#include <cuda_runtime.h>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <memory>
