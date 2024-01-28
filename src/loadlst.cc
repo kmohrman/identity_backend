@@ -38,7 +38,7 @@ void run_sdl() {
 
     lst.eventSetup();
 
-    cudaStream_t stream;
+    cudaStream_t stream = 0;
     bool verbose;
     std::vector<float> see_px;
     std::vector<float> see_py;
