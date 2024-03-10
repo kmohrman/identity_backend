@@ -19,24 +19,20 @@
 #include <iostream>
 #include <memory>
 
-#include "main.h"
+#include "../SDL/LST.h"
 
 //___________________________________________________________________________________________________________________________________________________________________________________________
-int main() {
-    std::cout << "HELLO world from sonic main" << std::endl;
-
-    // Run the code
-    run_sdl();
-
-    return 0;
-}
 
 void run_sdl() {
     std::cout << "Hi from run_sdl!" << std::endl;
 
     SDL::LST lst;
 
+    std::cout << "HERE 0" << std::endl;
+
     lst.eventSetup();
+
+    std::cout << "HERE 1" << std::endl;
 
     cudaStream_t stream = 0;
     bool verbose;
@@ -124,3 +120,13 @@ void run_sdl() {
 
 
 }
+
+int main() {
+    std::cout << "HELLO world from sonic main" << std::endl;
+
+    // Run the code
+    run_sdl();
+
+    return 0;
+}
+
