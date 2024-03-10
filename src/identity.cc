@@ -739,6 +739,13 @@ TRITONBACKEND_ModelInstanceExecute(
       //      contents into the output buffer.
       TRITONBACKEND_Response* response = responses[r];
       const void* output_tmp = model_state->fBSTest->getOutput();
+
+      // TEST //
+      std::cout << "\nRunnning run_sdl()!!!" << std::endl;
+      run_sdl();
+      std::cout << "\nDONE Runnning run_sdl()!!!" << std::endl;
+      ///////////
+
       uint64_t output_buffer_byte_size = model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
       int64_t* output_shape = new int64_t[1];
       //output_shape[0] = 1;
