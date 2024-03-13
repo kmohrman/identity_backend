@@ -721,9 +721,9 @@ TRITONBACKEND_ModelInstanceExecute(
 						     TRITONSERVER_ERROR_UNSUPPORTED,
 						     "failed to get input buffer in CPU memory"));
     }
-    model_state->fBSTest->fillSource(input_buffer,true);
-    for(unsigned int i0 = 1; i0 < input_shape[0]; i0++) model_state->fBSTest->fillSource(input_buffer,false);
-    
+    //model_state->fBSTest->fillSource(input_buffer,true); // COMMENT THIS
+    //for(unsigned int i0 = 1; i0 < input_shape[0]; i0++) model_state->fBSTest->fillSource(input_buffer,false); // COMMENT THIS
+
     // We only need to produce an output if it was requested.
     if (requested_output_count > 0) {
       // This backend simply copies the input tensor to the output
@@ -738,7 +738,7 @@ TRITONBACKEND_ModelInstanceExecute(
       //   3. Iterate over the input tensor buffers and copy the
       //      contents into the output buffer.
       TRITONBACKEND_Response* response = responses[r];
-      const void* output_tmp = model_state->fBSTest->getOutput();
+      //const void* output_tmp = model_state->fBSTest->getOutput(); // COMMENT THIS
 
       // TEST //
       cudaStream_t stream = 0;
@@ -858,7 +858,7 @@ TRITONBACKEND_ModelInstanceExecute(
                 .c_str());
         continue;
       }
-      memcpy(output_buffer,output_tmp,output_buffer_byte_size);
+      //memcpy(output_buffer,output_tmp,output_buffer_byte_size); // COMMENT this, since output_tmp commented (note tritonserver gives a seg fault if try to set output_tmp=0 or with output_tmp not set to anything)
       /*
       int8_t *output_buffer2 = new int8_t[output_buffer_byte_size];
       memcpy(output_buffer2,output_tmp,output_buffer_byte_size);
