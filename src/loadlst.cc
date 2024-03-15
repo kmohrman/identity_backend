@@ -10,8 +10,6 @@
 #include "Framework/PluginFactory.h"
 #include "Framework/EventSetup.h"
 #include "DataFormats/BeamSpotPOD.h"
-#include "Source.h"
-#include "StreamSchedule.h"
 #include <chrono>
 #include <cuda_runtime.h>
 #include <filesystem>
