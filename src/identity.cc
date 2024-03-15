@@ -28,7 +28,7 @@
 #include <thread>
 #include "triton/backend/backend_common.h"
 #include <tbb/task_scheduler_init.h>
-#include "loadbs.cc"
+////#include "loadbs.cc"
 #include "loadlst.cc"
 //#include "vector_add.cu"
 
@@ -81,7 +81,7 @@ class ModelState {
   // Block the thread for seconds specified in 'creation_delay_sec' parameter.
   // This function is used for testing.
   TRITONSERVER_Error* CreationDelay();
-  BSTest* fBSTest;
+  ////BSTest* fBSTest;
   
  private:
   ModelState(
@@ -509,7 +509,7 @@ TRITONBACKEND_ModelInstanceInitialize(TRITONBACKEND_ModelInstance* instance)
       instance, reinterpret_cast<void*>(instance_state)));
 
   //Now initialize Patatrack modules
-  model_state->fBSTest = new BSTest("data/beamspot.bin");
+  ////model_state->fBSTest = new BSTest("data/beamspot.bin");
   std::vector<std::string> lESModules;
   std::vector<std::string> lEDModules;
   lESModules = {"BeamSpotESProducer",
@@ -517,7 +517,7 @@ TRITONBACKEND_ModelInstanceInitialize(TRITONBACKEND_ModelInstance* instance)
 		"SiPixelROCsStatusAndMappingWrapperESProducer",
 		"PixelCPEFastESProducer"};
   lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA","SiPixelDigiErrorsSoAFromCUDA", "SiPixelRecHitFromCUDA","CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA","CountValidatorSimple"};
-  model_state->fBSTest->setItAll(0,lESModules,lEDModules);
+  ////model_state->fBSTest->setItAll(0,lESModules,lEDModules);
   return nullptr;  // success
 }
 
@@ -556,7 +556,7 @@ TRITONBACKEND_ModelInstanceExecute(
   ModelInstanceState* instance_state;
   RETURN_IF_ERROR(TRITONBACKEND_ModelInstanceState(
       instance, reinterpret_cast<void**>(&instance_state)));
-  ModelState* model_state = instance_state->StateForModel();
+  ////ModelState* model_state = instance_state->StateForModel();
 
   // This backend specifies BLOCKING execution policy. That means that
   // we should not return from this function until execution is
@@ -812,7 +812,8 @@ TRITONBACKEND_ModelInstanceExecute(
       std::cout << "\nDONE Runnning run_sdl()!!!" << std::endl;
       ///////////
 
-      uint64_t output_buffer_byte_size = model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
+      ////uint64_t output_buffer_byte_size = model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
+      uint64_t output_buffer_byte_size = 0; // TMP
       int64_t* output_shape = new int64_t[1];
       //output_shape[0] = 1;
       output_shape[0] = output_buffer_byte_size;
