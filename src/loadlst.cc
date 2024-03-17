@@ -2,14 +2,14 @@
 #include "CUDACore/ScopedContext.h"
 #include "CUDACore/copyAsync.h"
 #include "CUDACore/host_noncached_unique_ptr.h"
-#include "CUDADataFormats/BeamSpotCUDA.h"
+//#include "CUDADataFormats/BeamSpotCUDA.h"
 #include "Framework/ProductRegistry.h"
 #include "DataFormats/FEDRawDataCollection.h"
 
 #include "Framework/ESPluginFactory.h"
 #include "Framework/PluginFactory.h"
 #include "Framework/EventSetup.h"
-#include "DataFormats/BeamSpotPOD.h"
+//#include "DataFormats/BeamSpotPOD.h"
 #include <chrono>
 #include <cuda_runtime.h>
 #include <filesystem>
