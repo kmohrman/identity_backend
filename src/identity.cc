@@ -208,8 +208,10 @@ ModelState::ValidateModelConfig()
 
   // There must be 1 input and 1 output.
   RETURN_ERROR_IF_FALSE(
-      inputs.ArraySize() == 1, TRITONSERVER_ERROR_INVALID_ARG,
-      std::string("expected 1 input, got ") +
+      //inputs.ArraySize() == 1, TRITONSERVER_ERROR_INVALID_ARG,
+      inputs.ArraySize() == 2, TRITONSERVER_ERROR_INVALID_ARG,
+      //std::string("expected 1 input, got ") +
+      std::string("expected 2 input, got ") +
           std::to_string(inputs.ArraySize()));
   RETURN_ERROR_IF_FALSE(
       outputs.ArraySize() == 1, TRITONSERVER_ERROR_INVALID_ARG,
