@@ -28,8 +28,8 @@
 #include <thread>
 #include "triton/backend/backend_common.h"
 #include <tbb/task_scheduler_init.h>
-////#include "loadbs.cc"
-#include "loadlst.cc"
+//#include "loadlst.cc"
+#include "../SDL/LST.h"
 //#include "vector_add.cu"
 
 namespace triton { namespace backend { namespace identity {
@@ -82,6 +82,7 @@ class ModelState {
   // This function is used for testing.
   TRITONSERVER_Error* CreationDelay();
   ////BSTest* fBSTest;
+  SDL::LST* fLST;
   
  private:
   ModelState(
@@ -512,14 +513,16 @@ TRITONBACKEND_ModelInstanceInitialize(TRITONBACKEND_ModelInstance* instance)
 
   //Now initialize Patatrack modules
   ////model_state->fBSTest = new BSTest("data/beamspot.bin");
-  std::vector<std::string> lESModules;
-  std::vector<std::string> lEDModules;
-  lESModules = {"BeamSpotESProducer",
-		"SiPixelGainCalibrationForHLTGPUESProducer",
-		"SiPixelROCsStatusAndMappingWrapperESProducer",
-		"PixelCPEFastESProducer"};
-  lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA","SiPixelDigiErrorsSoAFromCUDA", "SiPixelRecHitFromCUDA","CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA","CountValidatorSimple"};
-  ////model_state->fBSTest->setItAll(0,lESModules,lEDModules);
+  model_state->fLST = new SDL::LST();
+  model_state->fLST->eventSetup();
+  //std::vector<std::string> lESModules;
+  //std::vector<std::string> lEDModules;
+  //lESModules = {"BeamSpotESProducer",
+  //  	"SiPixelGainCalibrationForHLTGPUESProducer",
+  //  	"SiPixelROCsStatusAndMappingWrapperESProducer",
+  //  	"PixelCPEFastESProducer"};
+  //lEDModules = {"BeamSpotToCUDA","SiPixelRawToClusterCUDA","SiPixelRecHitCUDA","SiPixelDigiErrorsSoAFromCUDA", "SiPixelRecHitFromCUDA","CAHitNtupletCUDA", "PixelTrackSoAFromCUDA", "PixelVertexProducerCUDA","PixelVertexSoAFromCUDA","CountValidatorSimple"};
+  //model_state->fBSTest->setItAll(0,lESModules,lEDModules);
   return nullptr;  // success
 }
 
@@ -558,7 +561,7 @@ TRITONBACKEND_ModelInstanceExecute(
   ModelInstanceState* instance_state;
   RETURN_IF_ERROR(TRITONBACKEND_ModelInstanceState(
       instance, reinterpret_cast<void**>(&instance_state)));
-  ////ModelState* model_state = instance_state->StateForModel();
+  ModelState* model_state = instance_state->StateForModel();
 
   // This backend specifies BLOCKING execution policy. That means that
   // we should not return from this function until execution is
@@ -723,8 +726,8 @@ TRITONBACKEND_ModelInstanceExecute(
 						     TRITONSERVER_ERROR_UNSUPPORTED,
 						     "failed to get input buffer in CPU memory"));
     }
-    //model_state->fBSTest->fillSource(input_buffer,true); // COMMENT THIS
-    //for(unsigned int i0 = 1; i0 < input_shape[0]; i0++) model_state->fBSTest->fillSource(input_buffer,false); // COMMENT THIS
+    //model_state->fBSTest->fillSource(input_buffer,true);
+    //for(unsigned int i0 = 1; i0 < input_shape[0]; i0++) model_state->fBSTest->fillSource(input_buffer,false);
 
     // We only need to produce an output if it was requested.
     if (requested_output_count > 0) {
@@ -787,8 +790,8 @@ TRITONBACKEND_ModelInstanceExecute(
       ph2_y = { -23.605579376220703,  -23.338693618774414,  42.14610290527344,  42.14256286621094,  21.90972900390625,  21.840721130371094,  -27.050264358520508,  -26.447938919067383,  -27.636144638061523,  -28.145404815673828,  48.50764846801758,  51.66998291015625,  -33.0841178894043,  -32.69963073730469,  -32.66823196411133,  -33.1895751953125,  58.889801025390625,  58.889801025390625,  31.82354736328125,  32.383323669433594,  -39.332298278808594,  -39.332298278808594,  38.159019470214844,  37.573204040527344,  -45.90589141845703,  -45.90589141845703,  22.886947631835938,  22.91532325744629,  -40.28700637817383,  -41.52977752685547,  -41.52977752685547,  -21.48033905029297,  -21.672752380371094,  26.61353302001953,  26.007343292236328,  27.180091857910156,  27.68935203552246,  -47.62282943725586,  -47.62632751464844,  32.396060943603516,  32.01976776123047,  -57.65045166015625,  -57.65045166015625,  -31.397897720336914,  -31.962995529174805,  38.414894104003906,  38.411354064941406,  -35.4271240234375,  -37.36289596557617,  -37.03583526611328,  47.43385314941406,  47.43385314941406,  -15.280265808105469,  -15.183039665222168,  16.624059677124023,  16.535945892333984,  -16.612171173095703,  -16.564538955688477,  -17.080642700195312,  14.836277961730957,  14.580804824829102,  22.880088806152344,  23.47719955444336,  23.37933921813965,  -22.7451171875,  -22.606861114501953,  34.0152473449707,  33.72981262207031,  -33.28642272949219,  -33.33147048950195};
       ph2_z = { -133.3105010986328,  -133.7104949951172,  -128.94500732421875,  -128.76499938964844,  -153.97950744628906,  -154.37950134277344,  -152.8695068359375,  -152.46949768066406,  -156.02049255371094,  -155.62049865722656,  -157.23500061035156,  -157.4149932861328,  -186.36050415039062,  -185.9604949951172,  -184.3195037841797,  -184.71949768066406,  -186.25599670410156,  -186.0760040283203,  -222.63949584960938,  -222.239501953125,  -219.38400268554688,  -218.98399353027344,  -267.1304931640625,  -267.5304870605469,  -265.9159851074219,  -265.5159912109375,  132.20050048828125,  131.80050659179688,  131.80050659179688,  130.26400756835938,  130.44400024414062,  152.8695068359375,  152.46949768066406,  153.97950744628906,  154.37950134277344,  157.1304931640625,  157.53050231933594,  155.91600036621094,  155.73599243164062,  187.4705047607422,  187.87049865722656,  187.5749969482422,  187.7550048828125,  223.74949645996094,  224.14950561523438,  220.7030029296875,  221.10299682617188,  263.9794921875,  266.0205078125,  265.6205139160156,  267.2349853515625,  267.635009765625,  -86.24923706054688,  -86.7442626953125,  -52.3003044128418,  -51.91516876220703,  53.512393951416016,  53.512393951416016,  53.453330993652344,  85.501220703125,  85.23539733886719,  -73.98045349121094,  -73.76063537597656,  -74.27043151855469,  73.12118530273438,  72.77932739257812,  -106.85971069335938,  -106.81586456298828,  107.15310668945312,  106.81586456298828};
 
-      std::cout << "\nRunnning run_sdl()!!!" << std::endl;
-      run_sdl(
+      std::cout << "Here is: model_state->fLST->run()" << std::endl;
+      model_state->fLST->run(
           stream,
           verbose,
           see_px,
@@ -811,7 +814,8 @@ TRITONBACKEND_ModelInstanceExecute(
           ph2_y,
           ph2_z
       );
-      std::cout << "\nDONE Runnning run_sdl()!!!" << std::endl;
+
+      std::cout << "\nDONE Runnning lst!" << std::endl;
       ///////////
 
       ////uint64_t output_buffer_byte_size = model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
