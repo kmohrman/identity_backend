@@ -16,6 +16,8 @@ namespace SDL {
     public:
         LST();
 
+        void readRawBuff(const void* input_buffer); // TEST
+
         void eventSetup();
         void run(cudaStream_t stream,
                  bool verbose,

@@ -19,6 +19,38 @@ float get_phi(float px, float py) {
     return atan2(px,py);
 }
 
+// TEST START
+void SDL::LST::readRawBuff(const void* input_buffer){
+    std::vector<float> bs;
+    unsigned iter = 0;
+    std::cout << "Here  in readRawBuff" << std::endl;
+    const float * test_buffer = reinterpret_cast<const float *>(input_buffer);
+    std::cout << "test_buffer  : " << test_buffer << std::endl;
+    std::cout << "*test_buffer : " << *test_buffer << std::endl;
+    std::cout << "test_buffer[0]: " << test_buffer[0] << std::endl;
+    std::cout << "test_buffer[1]: " << test_buffer[1] << std::endl;
+    std::cout << "test_buffer[2]: " << test_buffer[2] << std::endl;
+    std::cout << "*(test_buffer+2): " << *(test_buffer + 2) << std::endl;
+    std::cout << "test_buffer[3]: " << test_buffer[3] << std::endl;
+    std::cout << "test_buffer[4]: " << test_buffer[4] << std::endl;
+    std::cout << "test_buffer[5]: " << test_buffer[5] << std::endl;
+
+    /*
+    //std::memcpy(&bs,&(test_buffer[iter]),sizeof(float)*pBSSize);
+    iter+=pBSSize;
+    for (unsigned int ifed = 0; ifed < nfeds; ++ifed) {
+        std::cout << "    IN LOOP, ifed: " << ifed << std::endl;
+        unsigned int fedId   = (unsigned int) test_buffer[iter]; iter++;
+        unsigned int fedSize = (unsigned int) test_buffer[iter]; iter++;
+        //rawData.resize(fedSize*4);
+        //std::memcpy(rawData.data(),&(test_buffer[iter]),fedSize*4);
+        iter += fedSize;
+    }
+    */
+
+}
+// TEST END
+
 void SDL::LST::eventSetup() {
     static std::once_flag mapsLoaded;
     std::call_once(mapsLoaded, &SDL::LST::loadMaps, this);
