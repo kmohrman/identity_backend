@@ -684,9 +684,9 @@ TRITONBACKEND_ModelInstanceExecute(
 
     TRITONBACKEND_Input* input2 = nullptr;
     GUARDED_RESPOND_IF_ERROR(
-        responses, r, TRITONBACKEND_RequestInput(request, input_name2, &input1));
+        responses, r, TRITONBACKEND_RequestInput(request, input_name2, &input2));
 
-    std::cout << input2 << std::endl;
+    std::cout << "Input2: " << input2 << std::endl;
     /// tmp TEST end ///
 
     // We also validated that the model configuration specifies only a
@@ -731,14 +731,14 @@ TRITONBACKEND_ModelInstanceExecute(
               .c_str());
       continue;
     }
-    const void* input_buffer = nullptr;
+    const void* input_buffer1 = nullptr;
     uint64_t buffer_byte_size = 0;
     TRITONSERVER_MemoryType input_memory_type = TRITONSERVER_MEMORY_CPU;
     int64_t input_memory_type_id = 0;
     GUARDED_RESPOND_IF_ERROR(
 			     responses, r,
 			     TRITONBACKEND_InputBuffer(
-						       input1, 0, &input_buffer, &buffer_byte_size, &input_memory_type,
+						       input1, 0, &input_buffer1, &buffer_byte_size, &input_memory_type,
 						       &input_memory_type_id));
     if ((responses[r] == nullptr) ||
 	(input_memory_type == TRITONSERVER_MEMORY_GPU)) {
@@ -750,7 +750,7 @@ TRITONBACKEND_ModelInstanceExecute(
     }
     //model_state->fBSTest->fillSource(input_buffer,true);
     std::cout << "THIS input_count: " << input_count << std::endl;
-    model_state->fLST->readRawBuff(input_buffer);
+    model_state->fLST->readRawBuff(input_buffer1);
     //for(unsigned int i0 = 1; i0 < input_shape[0]; i0++) model_state->fBSTest->fillSource(input_buffer,false);
 
     // We only need to produce an output if it was requested.
