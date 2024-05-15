@@ -46,7 +46,7 @@ std::vector<float> SDL::LST::readRawBuff(const void* input_buffer){
     int itr_start; // Use this to keep track of where to start each for loop
 
     // The vectors we'll be filling
-    std::vector<float> phase2OTHits_detId;
+    std::vector<int> phase2OTHits_detId;
     std::vector<float> phase2OTHits_x;
     std::vector<float> phase2OTHits_y;
     std::vector<float> phase2OTHits_z;
@@ -65,8 +65,7 @@ std::vector<float> SDL::LST::readRawBuff(const void* input_buffer){
     std::vector<float> pixelSeeds_stateTrajGlbPy;
     std::vector<float> pixelSeeds_stateTrajGlbPz;
     std::vector<float> pixelSeeds_q;
-
-    std::vector< std::vector<float> > pixelSeeds_hitIdx;
+    std::vector<std::vector<float>> pixelSeeds_hitIdx;
 
 
     ////////////////// Get the phase2OTHits stuff //////////////////
@@ -75,7 +74,7 @@ std::vector<float> SDL::LST::readRawBuff(const void* input_buffer){
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_phase2OTHits; i++){
         phase2OTHits_detId.push_back(test_buffer[i]);
-        std::cout << "The phase2OTHits_detId:" <<  test_buffer[i] << std::endl;
+        std::cout << "The phase2OTHits_detId:" <<  int (test_buffer[i]) << std::endl;
         itr_main++;
     }
     itr_start = itr_main;
@@ -185,8 +184,30 @@ std::vector<float> SDL::LST::readRawBuff(const void* input_buffer){
         itr_main++;
     }
 
-    // Special case for hitIdx, since extra layer of nestedness
+    //// Special case for hitIdx, since extra layer of nestedness ////
 
+    // Get the shape vector
+    std::vector<float> hitIdx_sizes;
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
+        hitIdx_sizes.push_back(test_buffer[i]);
+        std::cout << "The hitIdxShape: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+
+    // Get the values
+    //std::vector<std::vector<float>> hitIdx;
+    for (const auto& hitIdx_size : hitIdx_sizes){
+        std::cout << "hitIdx_size????? " << hitIdx_size << std::endl;
+        std::vector<float> tmp_vec;
+        itr_start = itr_main;
+        for (int i=itr_start; i<itr_start+hitIdx_size; i++){
+            tmp_vec.push_back(test_buffer[i]);
+            std::cout << "    The hitIdx: " <<  test_buffer[i] << std::endl;
+            itr_main++;
+        }
+        pixelSeeds_hitIdx.push_back(tmp_vec);
+    }
 
     return out;
 }
