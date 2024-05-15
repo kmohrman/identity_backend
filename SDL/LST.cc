@@ -19,25 +19,6 @@ float get_phi(float px, float py) {
     return atan2(px,py);
 }
 
-// TEST START
-//std::tuple<
-    //std::vector<float>,
-    //std::vector<float>,
-    //std::vector<float>,
-    //std::vector<float>,
-    //std::vector<float>,
-    //std::vector<float>,
-    //std::vector<float>,
-    //std::vector<float>,
-    //std::vector<float>,
-    //std::vector<float>,
-    //std::vector<float>,
-    //std::vector<float>,
-    //std::vector<float>,
-    //std::vector<float>,
-    //std::vector<float>
-    //> 
-    //SDL::LST::readRawBuff(const void* input_buffer){
 
 std::vector<float> SDL::LST::readRawBuff(const void* input_buffer){
 
@@ -48,6 +29,7 @@ std::vector<float> SDL::LST::readRawBuff(const void* input_buffer){
     //auto test_buffer_size = sizeof(test_buffer) / sizeof(*test_buffer);
     auto test_buffer_size = sizeof(test_buffer) / sizeof(float);
     std::cout << "test_buffer_size????? " << test_buffer_size << std::endl;
+    std::cout << "test_buffer_size of ????? " << sizeof(test_buffer) << std::endl;
     std::cout << "test_buffer  : " << test_buffer << std::endl;
     std::cout << "*test_buffer : " << *test_buffer << std::endl;
     std::cout << "test_buffer[0]: " << test_buffer[0] << std::endl;
@@ -57,8 +39,154 @@ std::vector<float> SDL::LST::readRawBuff(const void* input_buffer){
     std::cout << "test_buffer[3]: " << test_buffer[3] << std::endl;
     std::cout << "test_buffer[4]: " << test_buffer[4] << std::endl;
     std::cout << "test_buffer[5]: " << test_buffer[5] << std::endl;
+    // Loop over the 4 phase2OTHits
 
-    //out = test_buffer[0];
+    // Get the info about how many phase2OTHits we have in this event
+    int itr_main = 0; // This will be the counter as we loop through the flat vector
+    int itr_start; // Use this to keep track of where to start each for loop
+
+    // The vectors we'll be filling
+    std::vector<float> phase2OTHits_detId;
+    std::vector<float> phase2OTHits_x;
+    std::vector<float> phase2OTHits_y;
+    std::vector<float> phase2OTHits_z;
+
+    std::vector<float> pixelSeeds_px;
+    std::vector<float> pixelSeeds_py;
+    std::vector<float> pixelSeeds_pz;
+    std::vector<float> pixelSeeds_dxy;
+    std::vector<float> pixelSeeds_dz;
+    std::vector<float> pixelSeeds_ptErr;
+    std::vector<float> pixelSeeds_etaErr;
+    std::vector<float> pixelSeeds_stateTrajGlbX;
+    std::vector<float> pixelSeeds_stateTrajGlbY;
+    std::vector<float> pixelSeeds_stateTrajGlbZ;
+    std::vector<float> pixelSeeds_stateTrajGlbPx;
+    std::vector<float> pixelSeeds_stateTrajGlbPy;
+    std::vector<float> pixelSeeds_stateTrajGlbPz;
+    std::vector<float> pixelSeeds_q;
+
+    std::vector< std::vector<float> > pixelSeeds_hitIdx;
+
+
+    ////////////////// Get the phase2OTHits stuff //////////////////
+    int n_phase2OTHits = test_buffer[0]; itr_main++;
+
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_phase2OTHits; i++){
+        phase2OTHits_detId.push_back(test_buffer[i]);
+        std::cout << "The phase2OTHits_detId:" <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_phase2OTHits; i++){
+        phase2OTHits_x.push_back(test_buffer[i]);
+        std::cout << "The phase2OTHits_x: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_phase2OTHits; i++){
+        phase2OTHits_y.push_back(test_buffer[i]);
+        std::cout << "The phase2OTHits_y: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_phase2OTHits; i++){
+        phase2OTHits_z.push_back(test_buffer[i]);
+        std::cout << "The phase2OTHits_z: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+
+    ////////////////// Get the pixelSeeds stuff //////////////////
+    int n_pixelSeeds = test_buffer[itr_main]; itr_main++;
+
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
+        pixelSeeds_px.push_back(test_buffer[i]);
+        std::cout << "The pixelSeeds_px: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
+        pixelSeeds_py.push_back(test_buffer[i]);
+        std::cout << "The pixelSeeds_py: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
+        pixelSeeds_pz.push_back(test_buffer[i]);
+        std::cout << "The pixelSeeds_pz: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
+        pixelSeeds_dxy.push_back(test_buffer[i]);
+        std::cout << "The pixelSeeds_dxy: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
+        pixelSeeds_dz.push_back(test_buffer[i]);
+        std::cout << "The pixelSeeds_dz: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
+        pixelSeeds_ptErr.push_back(test_buffer[i]);
+        std::cout << "The pixelSeeds_ptErr: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
+        pixelSeeds_etaErr.push_back(test_buffer[i]);
+        std::cout << "The pixelSeeds_etaErr: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
+        pixelSeeds_stateTrajGlbX.push_back(test_buffer[i]);
+        std::cout << "The pixelSeeds_stateTrajGlbX: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
+        pixelSeeds_stateTrajGlbY.push_back(test_buffer[i]);
+        std::cout << "The pixelSeeds_stateTrajGlbY: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
+        pixelSeeds_stateTrajGlbZ.push_back(test_buffer[i]);
+        std::cout << "The pixelSeeds_stateTrajGlbZ: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
+        pixelSeeds_stateTrajGlbPx.push_back(test_buffer[i]);
+        std::cout << "The pixelSeeds_stateTrajGlbPx: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
+        pixelSeeds_stateTrajGlbPy.push_back(test_buffer[i]);
+        std::cout << "The pixelSeeds_stateTrajGlbPy: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
+        pixelSeeds_stateTrajGlbPz.push_back(test_buffer[i]);
+        std::cout << "The pixelSeeds_stateTrajGlbPz: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+    itr_start = itr_main;
+    for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
+        pixelSeeds_q.push_back(test_buffer[i]);
+        std::cout << "The pixelSeeds_q: " <<  test_buffer[i] << std::endl;
+        itr_main++;
+    }
+
+    // Special case for hitIdx, since extra layer of nestedness
+
 
     return out;
 }
