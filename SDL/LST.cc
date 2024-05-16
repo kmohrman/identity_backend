@@ -25,21 +25,14 @@ std::vector<float> SDL::LST::readRawBuff(const void* input_buffer){
     std::vector<float> out;
     unsigned iter = 0;
     std::cout << "Here  in readRawBuff" << std::endl;
-    const float * test_buffer = reinterpret_cast<const float *>(input_buffer);
-    //auto test_buffer_size = sizeof(test_buffer) / sizeof(*test_buffer);
-    auto test_buffer_size = sizeof(test_buffer) / sizeof(float);
-    std::cout << "test_buffer_size????? " << test_buffer_size << std::endl;
-    std::cout << "test_buffer_size of ????? " << sizeof(test_buffer) << std::endl;
+    //const float * test_buffer = reinterpret_cast<const float *>(input_buffer);
+    const double * test_buffer = reinterpret_cast<const double *>(input_buffer);
     std::cout << "test_buffer  : " << test_buffer << std::endl;
     std::cout << "*test_buffer : " << *test_buffer << std::endl;
     std::cout << "test_buffer[0]: " << test_buffer[0] << std::endl;
     std::cout << "test_buffer[1]: " << test_buffer[1] << std::endl;
     std::cout << "test_buffer[2]: " << test_buffer[2] << std::endl;
     std::cout << "*(test_buffer+2): " << *(test_buffer + 2) << std::endl;
-    std::cout << "test_buffer[3]: " << test_buffer[3] << std::endl;
-    std::cout << "test_buffer[4]: " << test_buffer[4] << std::endl;
-    std::cout << "test_buffer[5]: " << test_buffer[5] << std::endl;
-    // Loop over the 4 phase2OTHits
 
     // Get the info about how many phase2OTHits we have in this event
     int itr_main = 0; // This will be the counter as we loop through the flat vector
@@ -50,7 +43,6 @@ std::vector<float> SDL::LST::readRawBuff(const void* input_buffer){
     std::vector<float> phase2OTHits_x;
     std::vector<float> phase2OTHits_y;
     std::vector<float> phase2OTHits_z;
-
     std::vector<float> pixelSeeds_px;
     std::vector<float> pixelSeeds_py;
     std::vector<float> pixelSeeds_pz;
@@ -70,10 +62,11 @@ std::vector<float> SDL::LST::readRawBuff(const void* input_buffer){
 
     ////////////////// Get the phase2OTHits stuff //////////////////
     int n_phase2OTHits = test_buffer[0]; itr_main++;
+    std::cout << "n_phase2OTHits:" <<  n_phase2OTHits << std::endl;
 
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_phase2OTHits; i++){
-        phase2OTHits_detId.push_back(test_buffer[i]);
+        phase2OTHits_detId.push_back(int (test_buffer[i]));
         std::cout << "The phase2OTHits_detId:" <<  int (test_buffer[i]) << std::endl;
         itr_main++;
     }
