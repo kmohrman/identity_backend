@@ -209,23 +209,21 @@ ModelState::ValidateModelConfig()
 
   // There must be 1 input and 1 output.
   RETURN_ERROR_IF_FALSE(
-      //inputs.ArraySize() == 1, TRITONSERVER_ERROR_INVALID_ARG,
-      inputs.ArraySize() == 2, TRITONSERVER_ERROR_INVALID_ARG,
-      //std::string("expected 1 input, got ") +
-      std::string("expected 2 input, got ") +
+      inputs.ArraySize() == 1, TRITONSERVER_ERROR_INVALID_ARG,
+      std::string("expected 1 input, got ") +
           std::to_string(inputs.ArraySize()));
   RETURN_ERROR_IF_FALSE(
       outputs.ArraySize() == 1, TRITONSERVER_ERROR_INVALID_ARG,
       std::string("expected 1 output, got ") +
           std::to_string(outputs.ArraySize()));
 
-  common::TritonJson::Value input1, output;
-  RETURN_IF_ERROR(inputs.IndexAsObject(0, &input1));
+  common::TritonJson::Value input, output;
+  RETURN_IF_ERROR(inputs.IndexAsObject(0, &input));
   RETURN_IF_ERROR(outputs.IndexAsObject(0, &output));
 
   // Input and output must have same datatype
   std::string input_dtype, output_dtype;
-  RETURN_IF_ERROR(input1.MemberAsString("data_type", &input_dtype));
+  RETURN_IF_ERROR(input.MemberAsString("data_type", &input_dtype));
   RETURN_IF_ERROR(output.MemberAsString("data_type", &output_dtype));
   return nullptr;  // success
 }
@@ -658,36 +656,14 @@ TRITONBACKEND_ModelInstanceExecute(
     //     ", requested_output_count = " + std::to_string(requested_output_count))
     //        .c_str());
 
-    //const char* input_name;
-    //GUARDED_RESPOND_IF_ERROR(
-    //    responses, r,
-    //    TRITONBACKEND_RequestInputName(request, 0 /* index */, &input_name));
-
-    //TRITONBACKEND_Input* input = nullptr;
-    //GUARDED_RESPOND_IF_ERROR(
-    //    responses, r, TRITONBACKEND_RequestInput(request, input_name, &input));
-
-    /// tmp TEST start ///
-    const char* input_name1;
+    const char* input_name;
     GUARDED_RESPOND_IF_ERROR(
         responses, r,
-        TRITONBACKEND_RequestInputName(request, 0 /* index */, &input_name1));
+        TRITONBACKEND_RequestInputName(request, 0 /* index */, &input_name));
 
-    TRITONBACKEND_Input* input1 = nullptr;
+    TRITONBACKEND_Input* input = nullptr;
     GUARDED_RESPOND_IF_ERROR(
-        responses, r, TRITONBACKEND_RequestInput(request, input_name1, &input1));
-
-    const char* input_name2;
-    GUARDED_RESPOND_IF_ERROR(
-        responses, r,
-        TRITONBACKEND_RequestInputName(request, 1 /* index */, &input_name2));
-
-    TRITONBACKEND_Input* input2 = nullptr;
-    GUARDED_RESPOND_IF_ERROR(
-        responses, r, TRITONBACKEND_RequestInput(request, input_name2, &input2));
-
-    std::cout << "Input2: " << input2 << std::endl;
-    /// tmp TEST end ///
+        responses, r, TRITONBACKEND_RequestInput(request, input_name, &input));
 
     // We also validated that the model configuration specifies only a
     // single output, but the request is not required to request any
@@ -721,7 +697,7 @@ TRITONBACKEND_ModelInstanceExecute(
     GUARDED_RESPOND_IF_ERROR(
         responses, r,
         TRITONBACKEND_InputProperties(
-            input1, nullptr /* input_name */, &input_datatype, &input_shape,
+            input, nullptr /* input_name */, &input_datatype, &input_shape,
             &input_dims_count, &input_byte_size, &input_buffer_count));
     if (responses[r] == nullptr) {
       LOG_MESSAGE(
@@ -731,14 +707,14 @@ TRITONBACKEND_ModelInstanceExecute(
               .c_str());
       continue;
     }
-    const void* input_buffer1 = nullptr;
+    const void* input_buffer = nullptr;
     uint64_t buffer_byte_size = 0;
     TRITONSERVER_MemoryType input_memory_type = TRITONSERVER_MEMORY_CPU;
     int64_t input_memory_type_id = 0;
     GUARDED_RESPOND_IF_ERROR(
 			     responses, r,
 			     TRITONBACKEND_InputBuffer(
-						       input1, 0, &input_buffer1, &buffer_byte_size, &input_memory_type,
+						       input, 0, &input_buffer, &buffer_byte_size, &input_memory_type,
 						       &input_memory_type_id));
     if ((responses[r] == nullptr) ||
 	(input_memory_type == TRITONSERVER_MEMORY_GPU)) {
@@ -750,7 +726,7 @@ TRITONBACKEND_ModelInstanceExecute(
     }
     //model_state->fBSTest->fillSource(input_buffer,true);
     std::cout << "THIS input_count: " << input_count << std::endl;
-    model_state->fLST->readRawBuff(input_buffer1);
+    model_state->fLST->readRawBuff(input_buffer);
     //for(unsigned int i0 = 1; i0 < input_shape[0]; i0++) model_state->fBSTest->fillSource(input_buffer,false);
 
     // We only need to produce an output if it was requested.
