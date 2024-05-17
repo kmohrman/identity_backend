@@ -8,6 +8,8 @@
 
 #include "../code/cppitertools/enumerate.hpp"
 
+#include "LSTOutput.h"
+
 #include "Event.cuh"
 
 namespace SDL {
@@ -16,7 +18,7 @@ namespace SDL {
     public:
         LST();
 
-        std::vector<float> readRawBuff(const void* input_buffer); // TEST
+        LSTOutput readRawBuff(const void* input_buffer); // TEST
 
         void eventSetup();
         void run(cudaStream_t stream,

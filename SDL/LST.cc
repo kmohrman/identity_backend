@@ -20,7 +20,7 @@ float get_phi(float px, float py) {
 }
 
 
-std::vector<float> SDL::LST::readRawBuff(const void* input_buffer){
+LSTOutput SDL::LST::readRawBuff(const void* input_buffer){
 
     std::vector<float> out;
     unsigned iter = 0;
@@ -228,7 +228,16 @@ std::vector<float> SDL::LST::readRawBuff(const void* input_buffer){
           phase2OTHits_z
     );
 
-    return out;
+    std::vector<std::vector<unsigned int>> out_hits               = SDL::LST::hits();
+    std::vector<unsigned int>              out_len                = SDL::LST::len();
+    std::vector<int>                       out_seedIdx            = SDL::LST::seedIdx();
+    std::vector<short>                     out_trackCandidateType = SDL::LST::trackCandidateType();
+
+    LSTOutput lstOutput;
+    lstOutput.setLSTOutputTraits(SDL::LST::hits(), SDL::LST::len(), SDL::LST::seedIdx(), SDL::LST::trackCandidateType());
+    std::cout << "THIS???? 3" << std::endl;
+
+    return lstOutput;
 }
 // TEST END
 
