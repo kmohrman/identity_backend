@@ -20,10 +20,8 @@ float get_phi(float px, float py) {
 }
 
 
-LSTOutput SDL::LST::readRawBuff(const void* input_buffer){
+LSTOutput *SDL::LST::readRawBuff(const void* input_buffer){
 
-    std::vector<float> out;
-    unsigned iter = 0;
     std::cout << "Here  in readRawBuff" << std::endl;
     //const float * test_buffer = reinterpret_cast<const float *>(input_buffer);
     const double * test_buffer = reinterpret_cast<const double *>(input_buffer);
@@ -233,11 +231,24 @@ LSTOutput SDL::LST::readRawBuff(const void* input_buffer){
     std::vector<int>                       out_seedIdx            = SDL::LST::seedIdx();
     std::vector<short>                     out_trackCandidateType = SDL::LST::trackCandidateType();
 
-    LSTOutput lstOutput;
-    lstOutput.setLSTOutputTraits(SDL::LST::hits(), SDL::LST::len(), SDL::LST::seedIdx(), SDL::LST::trackCandidateType());
-    std::cout << "THIS???? 3" << std::endl;
+    std::cout << "" << std::endl;;
+    std::cout << "sizeof(unsigned int): " << sizeof(unsigned int) << std::endl;
+    std::cout << "sizeof(float): " << sizeof(float) << std::endl;
+    std::cout << "sizeof(regular int): " << sizeof(int) << std::endl;
+    std::cout << "sizeof(short): " << sizeof(short) << std::endl;
 
-    return lstOutput;
+    // Get sizes of the four outputs
+    int outsize_hits = 0;
+    for (const auto& out_hit: out_hits){
+        outsize_hits = outsize_hits + (sizeof(unsigned int) * out_hit.size());
+    };
+    int outsize_len                 = sizeof(unsigned int) * out_len.size();
+    int outsize_seedIdx             = sizeof(int) * out_seedIdx.size();
+    int outsize_trackCandidateType  = sizeof(short) * out_trackCandidateType.size();
+    int outsize_tot = outsize_hits + outsize_len + outsize_seedIdx + outsize_trackCandidateType;
+    SDL::LST::lst_outsize = outsize_tot;
+
+    return &lst_output;
 }
 // TEST END
 

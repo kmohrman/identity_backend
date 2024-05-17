@@ -725,14 +725,13 @@ TRITONBACKEND_ModelInstanceExecute(
 						     "failed to get input buffer in CPU memory"));
     }
     //model_state->fBSTest->fillSource(input_buffer,true);
-    std::cout << "THIS input_count: " << input_count << std::endl;
-    LSTOutput outtest = model_state->fLST->readRawBuff(input_buffer);
     //for(unsigned int i0 = 1; i0 < input_shape[0]; i0++) model_state->fBSTest->fillSource(input_buffer,false);
-    (void) outtest;
+    std::cout << "The input_count: " << input_count << std::endl;
+    LSTOutput *lst_output = model_state->fLST->readRawBuff(input_buffer);
 
+    // Run LST on a hard coded event
     bool run_hardcoded = false;
     if (run_hardcoded) {
-      // TEST //
       cudaStream_t stream = 0;
       bool verbose;
       std::vector<float> see_px;
@@ -801,8 +800,6 @@ TRITONBACKEND_ModelInstanceExecute(
           ph2_y,
           ph2_z
       );
-
-      std::cout << "\nDONE Runnning lst!" << std::endl;
     };
 
     // We only need to produce an output if it was requested.
@@ -820,8 +817,12 @@ TRITONBACKEND_ModelInstanceExecute(
       //      contents into the output buffer.
       TRITONBACKEND_Response* response = responses[r];
       //const void* output_tmp = model_state->fBSTest->getOutput(); // COMMENT THIS
-      ////uint64_t output_buffer_byte_size = model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
-      uint64_t output_buffer_byte_size = 0; // TMP
+      //uint64_t output_buffer_byte_size = model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
+      const void* output_tmp = lst_output;
+      uint64_t output_buffer_byte_size = model_state->fLST->lst_outsize;
+      std::cout << "LST output size (bytes): " << model_state->fLST->lst_outsize << std::endl;
+      std::cout << "OUTPUT TMP??????????" << output_tmp << std::endl;
+
       int64_t* output_shape = new int64_t[1];
       //output_shape[0] = 1;
       output_shape[0] = output_buffer_byte_size;
