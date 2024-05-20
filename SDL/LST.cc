@@ -20,7 +20,9 @@ float get_phi(float px, float py) {
 }
 
 
-LSTOutput *SDL::LST::readRawBuff(const void* input_buffer){
+//LSTOutput *SDL::LST::readRawBuff(const void* input_buffer){
+//void SDL::LST::readRawBuff(const void* input_buffer){
+std::vector<int> *SDL::LST::readRawBuff(const void* input_buffer){
 
     std::cout << "Here  in readRawBuff" << std::endl;
     //const float * test_buffer = reinterpret_cast<const float *>(input_buffer);
@@ -226,18 +228,59 @@ LSTOutput *SDL::LST::readRawBuff(const void* input_buffer){
           phase2OTHits_z
     );
 
-    std::vector<std::vector<unsigned int>> out_hits               = SDL::LST::hits();
-    std::vector<unsigned int>              out_len                = SDL::LST::len();
     std::vector<int>                       out_seedIdx            = SDL::LST::seedIdx();
     std::vector<short>                     out_trackCandidateType = SDL::LST::trackCandidateType();
+    std::vector<unsigned int>              out_len                = SDL::LST::len();
+    std::vector<std::vector<unsigned int>> out_hits               = SDL::LST::hits();
 
+
+    /////////// Fill the output vector with the flattened outputs ///////////
+    std::vector<int> out;
+
+    // The trackCandidateType:
+    out.push_back(out_seedIdx.size());
+    for (int out_seedIdx_i : out_seedIdx) {
+        std::cout << "out_seedIdx " << out_seedIdx_i << std::endl;
+        out.push_back(out_seedIdx_i);
+    };
+    // The trackCandidateType:
+    out.push_back(out_trackCandidateType.size());
+    for (short out_trackCandidateType_i : out_trackCandidateType) {
+        std::cout << "out_trackCandidateType " << out_trackCandidateType_i << std::endl;
+        out.push_back(out_trackCandidateType_i);
+    };
+    // The len:
+    out.push_back(out_len.size());
+    for (unsigned int out_len_i: out_len) {
+        std::cout << "out_len " <<  out_len_i << std::endl;
+        out.push_back(out_len_i);
+    };
+    // The hits, these are nested, so need all shape info:
+    out.push_back(out_hits.size());
+    for (const auto& out_hits_i : out_hits){
+        std::cout << "out_hits_i_len " <<  out_hits_i.size() << std::endl;
+        out.push_back(out_hits_i.size());
+    };
+    for (const auto& out_hits_i : out_hits){
+        std::cout << "New" <<  std::endl;
+        for (const auto& out_hits_ij: out_hits_i) {
+            std::cout << "out_hits_ij " <<  out_hits_ij << std::endl;
+            out.push_back(out_hits_ij);
+        };
+    };
+    SDL::LST::lst_output = out;
+
+    // Get sizes of the four outputs
+    // The vector is all int, so just need to know len and size of an int
+    SDL::LST::lst_outsize = out.size() * sizeof(int);
+
+    /*
+    // Get sizes of the four outputs
     std::cout << "" << std::endl;;
     std::cout << "sizeof(unsigned int): " << sizeof(unsigned int) << std::endl;
     std::cout << "sizeof(float): " << sizeof(float) << std::endl;
     std::cout << "sizeof(regular int): " << sizeof(int) << std::endl;
     std::cout << "sizeof(short): " << sizeof(short) << std::endl;
-
-    // Get sizes of the four outputs
     int outsize_hits = 0;
     for (const auto& out_hit: out_hits){
         outsize_hits = outsize_hits + (sizeof(unsigned int) * out_hit.size());
@@ -247,7 +290,10 @@ LSTOutput *SDL::LST::readRawBuff(const void* input_buffer){
     int outsize_trackCandidateType  = sizeof(short) * out_trackCandidateType.size();
     int outsize_tot = outsize_hits + outsize_len + outsize_seedIdx + outsize_trackCandidateType;
     SDL::LST::lst_outsize = outsize_tot;
+    */
 
+    //return &out;
+    //return void;
     return &lst_output;
 }
 // TEST END

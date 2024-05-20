@@ -19,8 +19,11 @@ namespace SDL {
         LST();
 
         int lst_outsize;
-        LSTOutput lst_output;
-        LSTOutput *readRawBuff(const void* input_buffer); // TEST
+        std::vector<int> lst_output;
+        std::vector<int> *readRawBuff(const void* input_buffer); // TEST
+        //void readRawBuff(const void* input_buffer); // TEST
+        //LSTOutput lst_output;
+        //LSTOutput *readRawBuff(const void* input_buffer); // TEST
 
         void eventSetup();
         void run(cudaStream_t stream,

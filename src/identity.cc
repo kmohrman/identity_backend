@@ -727,7 +727,9 @@ TRITONBACKEND_ModelInstanceExecute(
     //model_state->fBSTest->fillSource(input_buffer,true);
     //for(unsigned int i0 = 1; i0 < input_shape[0]; i0++) model_state->fBSTest->fillSource(input_buffer,false);
     std::cout << "The input_count: " << input_count << std::endl;
-    LSTOutput *lst_output = model_state->fLST->readRawBuff(input_buffer);
+    //std::vector<int> *lst_output = model_state->fLST->readRawBuff(input_buffer);
+    //model_state->fLST->readRawBuff(input_buffer);
+    std::vector<int> *lst_output = model_state->fLST->readRawBuff(input_buffer);
 
     // Run LST on a hard coded event
     bool run_hardcoded = false;
@@ -821,7 +823,7 @@ TRITONBACKEND_ModelInstanceExecute(
       const void* output_tmp = lst_output;
       uint64_t output_buffer_byte_size = model_state->fLST->lst_outsize;
       std::cout << "LST output size (bytes): " << model_state->fLST->lst_outsize << std::endl;
-      std::cout << "OUTPUT TMP??????????" << output_tmp << std::endl;
+      std::cout << "OUTPUT TMP??" << output_tmp << std::endl;
 
       int64_t* output_shape = new int64_t[1];
       //output_shape[0] = 1;
@@ -868,7 +870,9 @@ TRITONBACKEND_ModelInstanceExecute(
                 .c_str());
         continue;
       }
-      //memcpy(output_buffer,output_tmp,output_buffer_byte_size); // COMMENT this, since output_tmp commented (note tritonserver gives a seg fault if try to set output_tmp=0 or with output_tmp not set to anything)
+      std::cout << "DID WE MAKE IT HERE? 1" << std::endl;
+      memcpy(output_buffer,output_tmp,output_buffer_byte_size);
+      std::cout << "DID WE MAKE IT HERE? 2" << std::endl;
       /*
       int8_t *output_buffer2 = new int8_t[output_buffer_byte_size];
       memcpy(output_buffer2,output_tmp,output_buffer_byte_size);
