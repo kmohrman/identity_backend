@@ -730,6 +730,22 @@ TRITONBACKEND_ModelInstanceExecute(
     //std::vector<int> *lst_output = model_state->fLST->readRawBuff(input_buffer);
     //model_state->fLST->readRawBuff(input_buffer);
     std::vector<int> *lst_output = model_state->fLST->readRawBuff(input_buffer);
+    std::cout << "What is this?: " << lst_output->at(0) << std::endl;
+
+    std::vector<int> lst_output_direct = model_state->fLST->lst_output;
+    std::vector<int> *lst_output_direct_p = &(model_state->fLST->lst_output);
+
+    std::cout << "lst_output_direct[0]" << lst_output_direct.at(0) << std::endl;
+    std::cout << "lst_output_direct_p[0]" << lst_output_direct_p->at(0) << std::endl;
+
+    int first_item_0;
+    std::memcpy(&first_item_0, &lst_output_direct, sizeof(int));
+    std::cout << "THIS IS first_item_0: " << first_item_0 << std::endl;
+
+    int first_item_1;
+    std::memcpy(&first_item_1, &lst_output_direct_p, sizeof(int));
+    std::cout << "THIS IS first_item_1: " << first_item_1 << std::endl;
+
 
     // Run LST on a hard coded event
     bool run_hardcoded = false;
@@ -821,9 +837,17 @@ TRITONBACKEND_ModelInstanceExecute(
       //const void* output_tmp = model_state->fBSTest->getOutput(); // COMMENT THIS
       //uint64_t output_buffer_byte_size = model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
       const void* output_tmp = lst_output;
+      //uint64_t output_buffer_byte_size = model_state->fLST->lst_outsize;
       uint64_t output_buffer_byte_size = model_state->fLST->lst_outsize;
       std::cout << "LST output size (bytes): " << model_state->fLST->lst_outsize << std::endl;
+      std::cout << "LST output_buffer_byte_size: " << output_buffer_byte_size << std::endl;
       std::cout << "OUTPUT TMP??" << output_tmp << std::endl;
+      int first_item_lst_output;
+      std::memcpy(&first_item_lst_output, &output_tmp, sizeof(int));
+      std::cout << "first_item lst output???????? " << first_item_lst_output << std::endl;
+      int first_item;
+      std::memcpy(&first_item, &output_tmp, sizeof(int));
+      std::cout << "first_item???????? " << first_item << std::endl;
 
       int64_t* output_shape = new int64_t[1];
       //output_shape[0] = 1;

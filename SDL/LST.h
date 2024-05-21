@@ -18,7 +18,7 @@ namespace SDL {
     public:
         LST();
 
-        int lst_outsize;
+        unsigned int lst_outsize;
         std::vector<int> lst_output;
         std::vector<int> *readRawBuff(const void* input_buffer); // TEST
         //void readRawBuff(const void* input_buffer); // TEST
