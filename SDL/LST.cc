@@ -272,6 +272,7 @@ std::vector<int> *SDL::LST::readRawBuff(const void* input_buffer){
 
     // Get sizes of the four outputs
     // The vector is all int, so just need to know len and size of an int
+    std::cout << "sizeof(int): " << sizeof(int) << std::endl;
     SDL::LST::lst_outsize = out.size() * sizeof(int);
 
     /*

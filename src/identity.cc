@@ -585,6 +585,7 @@ TRITONBACKEND_ModelInstanceExecute(
   // Create a single response object for each request. If something
   // goes wrong when attempting to create the response objects just
   // fail all of the requests by returning an error.
+  std::cout << "THIS IS request_count " << request_count << std::endl;
   for (uint32_t r = 0; r < request_count; ++r) {
     TRITONBACKEND_Request* request = requests[r];
     TRITONBACKEND_Response* response;
@@ -739,11 +740,11 @@ TRITONBACKEND_ModelInstanceExecute(
     std::cout << "lst_output_direct_p[0]" << lst_output_direct_p->at(0) << std::endl;
 
     int first_item_0;
-    std::memcpy(&first_item_0, &lst_output_direct, sizeof(int));
+    std::memcpy(&first_item_0, lst_output_direct.data(), sizeof(int));
     std::cout << "THIS IS first_item_0: " << first_item_0 << std::endl;
 
     int first_item_1;
-    std::memcpy(&first_item_1, &lst_output_direct_p, sizeof(int));
+    std::memcpy(&first_item_1, lst_output_direct_p->data(), sizeof(int));
     std::cout << "THIS IS first_item_1: " << first_item_1 << std::endl;
 
 
@@ -821,6 +822,7 @@ TRITONBACKEND_ModelInstanceExecute(
     };
 
     // We only need to produce an output if it was requested.
+    std::cout << "THIS IS requested_output_count " << requested_output_count << std::endl;
     if (requested_output_count > 0) {
       // This backend simply copies the input tensor to the output
       // tensor. The input tensor contents are available in one or
@@ -836,17 +838,21 @@ TRITONBACKEND_ModelInstanceExecute(
       TRITONBACKEND_Response* response = responses[r];
       //const void* output_tmp = model_state->fBSTest->getOutput(); // COMMENT THIS
       //uint64_t output_buffer_byte_size = model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
-      const void* output_tmp = lst_output;
+
+      //const void* output_tmp = lst_output->data();
+      std::cout << "Testing this........." << std::endl;
+      const void* output_tmp = model_state->fLST->lst_output.data();
+
       //uint64_t output_buffer_byte_size = model_state->fLST->lst_outsize;
       uint64_t output_buffer_byte_size = model_state->fLST->lst_outsize;
       std::cout << "LST output size (bytes): " << model_state->fLST->lst_outsize << std::endl;
       std::cout << "LST output_buffer_byte_size: " << output_buffer_byte_size << std::endl;
-      std::cout << "OUTPUT TMP??" << output_tmp << std::endl;
+      std::cout << "Just print OUTPUT TMP??" << output_tmp << std::endl;
       int first_item_lst_output;
-      std::memcpy(&first_item_lst_output, &output_tmp, sizeof(int));
+      std::memcpy(&first_item_lst_output, output_tmp, sizeof(int));
       std::cout << "first_item lst output???????? " << first_item_lst_output << std::endl;
       int first_item;
-      std::memcpy(&first_item, &output_tmp, sizeof(int));
+      std::memcpy(&first_item, output_tmp, sizeof(int));
       std::cout << "first_item???????? " << first_item << std::endl;
 
       int64_t* output_shape = new int64_t[1];
@@ -896,7 +902,18 @@ TRITONBACKEND_ModelInstanceExecute(
       }
       std::cout << "DID WE MAKE IT HERE? 1" << std::endl;
       memcpy(output_buffer,output_tmp,output_buffer_byte_size);
+      std::cout << "output_buffer " << output_buffer << std::endl;
+      std::cout << "&output_buffer " << &output_buffer << std::endl;
       std::cout << "DID WE MAKE IT HERE? 2" << std::endl;
+
+      int test1 = -999.9;
+      memcpy(&test1,output_buffer,sizeof(int));
+      std::cout << "Test1: " << test1 << std::endl;
+
+      int test2 = -999.9;
+      memcpy(&test2,output_tmp,sizeof(int));
+      std::cout << "Test2: " << test2 << std::endl;
+
       /*
       int8_t *output_buffer2 = new int8_t[output_buffer_byte_size];
       memcpy(output_buffer2,output_tmp,output_buffer_byte_size);
