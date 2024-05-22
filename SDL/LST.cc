@@ -21,9 +21,9 @@ float get_phi(float px, float py) {
 
 
 // Read the LST inputs, evaluate, get outputs
-std::vector<int> *SDL::LST::readRawBuff(const void* input_buffer){
+void SDL::LST::readRawBuffEvalLST(const void* input_buffer){
 
-    std::cout << "Here  in readRawBuff" << std::endl;
+    std::cout << "\nHere  in readRawBuffEvalLST" << std::endl;
     const double * test_buffer = reinterpret_cast<const double *>(input_buffer);
 
     // Get the info about how many phase2OTHits we have in this event
@@ -268,8 +268,7 @@ std::vector<int> *SDL::LST::readRawBuff(const void* input_buffer){
     std::cout << "sizeof(int): " << sizeof(int) << std::endl;
     SDL::LST::lst_outsize = out.size() * sizeof(int);
 
-    // TODO: Do not really need to return this
-    return &lst_output;
+    return;
 }
 
 

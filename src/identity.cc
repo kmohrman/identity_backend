@@ -723,11 +723,8 @@ TRITONBACKEND_ModelInstanceExecute(
 						     TRITONSERVER_ERROR_UNSUPPORTED,
 						     "failed to get input buffer in CPU memory"));
     }
-
     // Read the input and set the output
-    // Right now this returns a pointer, why, should not
-    std::vector<int> *lst_output = model_state->fLST->readRawBuff(input_buffer);
-    std::cout << "First element of lst_output: " << lst_output->at(0) << std::endl;
+    model_state->fLST->readRawBuffEvalLST(input_buffer);
 
     // Run LST on a hard coded event
     bool run_hardcoded = false;
