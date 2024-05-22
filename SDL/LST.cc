@@ -20,19 +20,11 @@ float get_phi(float px, float py) {
 }
 
 
-//LSTOutput *SDL::LST::readRawBuff(const void* input_buffer){
-//void SDL::LST::readRawBuff(const void* input_buffer){
+// Read the LST inputs, evaluate, get outputs
 std::vector<int> *SDL::LST::readRawBuff(const void* input_buffer){
 
     std::cout << "Here  in readRawBuff" << std::endl;
-    //const float * test_buffer = reinterpret_cast<const float *>(input_buffer);
     const double * test_buffer = reinterpret_cast<const double *>(input_buffer);
-    std::cout << "test_buffer  : " << test_buffer << std::endl;
-    std::cout << "*test_buffer : " << *test_buffer << std::endl;
-    std::cout << "test_buffer[0]: " << test_buffer[0] << std::endl;
-    std::cout << "test_buffer[1]: " << test_buffer[1] << std::endl;
-    std::cout << "test_buffer[2]: " << test_buffer[2] << std::endl;
-    std::cout << "*(test_buffer+2): " << *(test_buffer + 2) << std::endl;
 
     // Get the info about how many phase2OTHits we have in this event
     int itr_main = 0; // This will be the counter as we loop through the flat vector
@@ -189,9 +181,8 @@ std::vector<int> *SDL::LST::readRawBuff(const void* input_buffer){
     }
 
     // Get the values
-    //std::vector<std::vector<float>> hitIdx;
     for (const auto& hitIdx_size : hitIdx_sizes){
-        std::cout << "hitIdx_size????? " << hitIdx_size << std::endl;
+        std::cout << "hitIdx_size: " << hitIdx_size << std::endl;
         std::vector<int> tmp_vec;
         itr_start = itr_main;
         for (int i=itr_start; i<itr_start+hitIdx_size; i++){
@@ -202,6 +193,7 @@ std::vector<int> *SDL::LST::readRawBuff(const void* input_buffer){
         pixelSeeds_hitIdx.push_back(tmp_vec);
     }
 
+    // Evaluate
     cudaStream_t stream = 0;
     bool verbose = true;
     SDL::LST::run(
@@ -228,6 +220,7 @@ std::vector<int> *SDL::LST::readRawBuff(const void* input_buffer){
           phase2OTHits_z
     );
 
+    // Get a hold of the outputs
     std::vector<int>                       out_seedIdx            = SDL::LST::seedIdx();
     std::vector<short>                     out_trackCandidateType = SDL::LST::trackCandidateType();
     std::vector<unsigned int>              out_len                = SDL::LST::len();
@@ -275,29 +268,10 @@ std::vector<int> *SDL::LST::readRawBuff(const void* input_buffer){
     std::cout << "sizeof(int): " << sizeof(int) << std::endl;
     SDL::LST::lst_outsize = out.size() * sizeof(int);
 
-    /*
-    // Get sizes of the four outputs
-    std::cout << "" << std::endl;;
-    std::cout << "sizeof(unsigned int): " << sizeof(unsigned int) << std::endl;
-    std::cout << "sizeof(float): " << sizeof(float) << std::endl;
-    std::cout << "sizeof(regular int): " << sizeof(int) << std::endl;
-    std::cout << "sizeof(short): " << sizeof(short) << std::endl;
-    int outsize_hits = 0;
-    for (const auto& out_hit: out_hits){
-        outsize_hits = outsize_hits + (sizeof(unsigned int) * out_hit.size());
-    };
-    int outsize_len                 = sizeof(unsigned int) * out_len.size();
-    int outsize_seedIdx             = sizeof(int) * out_seedIdx.size();
-    int outsize_trackCandidateType  = sizeof(short) * out_trackCandidateType.size();
-    int outsize_tot = outsize_hits + outsize_len + outsize_seedIdx + outsize_trackCandidateType;
-    SDL::LST::lst_outsize = outsize_tot;
-    */
-
-    //return &out;
-    //return void;
+    // TODO: Do not really need to return this
     return &lst_output;
 }
-// TEST END
+
 
 void SDL::LST::eventSetup() {
     static std::once_flag mapsLoaded;

@@ -28,9 +28,7 @@
 #include <thread>
 #include "triton/backend/backend_common.h"
 #include <tbb/task_scheduler_init.h>
-//#include "loadlst.cc"
 #include "../SDL/LST.h"
-//#include "vector_add.cu"
 
 namespace triton { namespace backend { namespace identity {
  
@@ -725,28 +723,11 @@ TRITONBACKEND_ModelInstanceExecute(
 						     TRITONSERVER_ERROR_UNSUPPORTED,
 						     "failed to get input buffer in CPU memory"));
     }
-    //model_state->fBSTest->fillSource(input_buffer,true);
-    //for(unsigned int i0 = 1; i0 < input_shape[0]; i0++) model_state->fBSTest->fillSource(input_buffer,false);
-    std::cout << "The input_count: " << input_count << std::endl;
-    //std::vector<int> *lst_output = model_state->fLST->readRawBuff(input_buffer);
-    //model_state->fLST->readRawBuff(input_buffer);
+
+    // Read the input and set the output
+    // Right now this returns a pointer, why, should not
     std::vector<int> *lst_output = model_state->fLST->readRawBuff(input_buffer);
-    std::cout << "What is this?: " << lst_output->at(0) << std::endl;
-
-    std::vector<int> lst_output_direct = model_state->fLST->lst_output;
-    std::vector<int> *lst_output_direct_p = &(model_state->fLST->lst_output);
-
-    std::cout << "lst_output_direct[0]" << lst_output_direct.at(0) << std::endl;
-    std::cout << "lst_output_direct_p[0]" << lst_output_direct_p->at(0) << std::endl;
-
-    int first_item_0;
-    std::memcpy(&first_item_0, lst_output_direct.data(), sizeof(int));
-    std::cout << "THIS IS first_item_0: " << first_item_0 << std::endl;
-
-    int first_item_1;
-    std::memcpy(&first_item_1, lst_output_direct_p->data(), sizeof(int));
-    std::cout << "THIS IS first_item_1: " << first_item_1 << std::endl;
-
+    std::cout << "First element of lst_output: " << lst_output->at(0) << std::endl;
 
     // Run LST on a hard coded event
     bool run_hardcoded = false;
@@ -822,7 +803,7 @@ TRITONBACKEND_ModelInstanceExecute(
     };
 
     // We only need to produce an output if it was requested.
-    std::cout << "THIS IS requested_output_count " << requested_output_count << std::endl;
+    std::cout << "The requested_output_count: " << requested_output_count << std::endl;
     if (requested_output_count > 0) {
       // This backend simply copies the input tensor to the output
       // tensor. The input tensor contents are available in one or
@@ -836,27 +817,13 @@ TRITONBACKEND_ModelInstanceExecute(
       //   3. Iterate over the input tensor buffers and copy the
       //      contents into the output buffer.
       TRITONBACKEND_Response* response = responses[r];
-      //const void* output_tmp = model_state->fBSTest->getOutput(); // COMMENT THIS
-      //uint64_t output_buffer_byte_size = model_state->fBSTest->getSize();//7200000;//8146596;//reinterpret_cast<uint32_t*>(output_buffer)[0]*4*sizeof(uint32_t); 
 
-      //const void* output_tmp = lst_output->data();
-      std::cout << "Testing this........." << std::endl;
+      // Setting output_tmp
       const void* output_tmp = model_state->fLST->lst_output.data();
-
-      //uint64_t output_buffer_byte_size = model_state->fLST->lst_outsize;
+      // Getting output size
       uint64_t output_buffer_byte_size = model_state->fLST->lst_outsize;
-      std::cout << "LST output size (bytes): " << model_state->fLST->lst_outsize << std::endl;
       std::cout << "LST output_buffer_byte_size: " << output_buffer_byte_size << std::endl;
-      std::cout << "Just print OUTPUT TMP??" << output_tmp << std::endl;
-      int first_item_lst_output;
-      std::memcpy(&first_item_lst_output, output_tmp, sizeof(int));
-      std::cout << "first_item lst output???????? " << first_item_lst_output << std::endl;
-      int first_item;
-      std::memcpy(&first_item, output_tmp, sizeof(int));
-      std::cout << "first_item???????? " << first_item << std::endl;
-
       int64_t* output_shape = new int64_t[1];
-      //output_shape[0] = 1;
       output_shape[0] = output_buffer_byte_size;
       uint32_t output_dims_count = 1;
       // Step 1. Input and output have same datatype and shape...
@@ -900,19 +867,15 @@ TRITONBACKEND_ModelInstanceExecute(
                 .c_str());
         continue;
       }
-      std::cout << "DID WE MAKE IT HERE? 1" << std::endl;
       memcpy(output_buffer,output_tmp,output_buffer_byte_size);
-      std::cout << "output_buffer " << output_buffer << std::endl;
-      std::cout << "&output_buffer " << &output_buffer << std::endl;
-      std::cout << "DID WE MAKE IT HERE? 2" << std::endl;
 
+      // Make sure first element of the output buffer makes sense
       int test1 = -999.9;
-      memcpy(&test1,output_buffer,sizeof(int));
-      std::cout << "Test1: " << test1 << std::endl;
-
       int test2 = -999.9;
-      memcpy(&test2,output_tmp,sizeof(int));
-      std::cout << "Test2: " << test2 << std::endl;
+      memcpy(&test1,output_buffer,sizeof(int));
+      memcpy(&test2,output_tmp,   sizeof(int));
+      std::cout << "Check output_buffer first int: " << test1 << std::endl;
+      std::cout << "Check output_tmp first int: "    << test2 << std::endl;
 
       /*
       int8_t *output_buffer2 = new int8_t[output_buffer_byte_size];
