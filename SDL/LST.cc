@@ -24,6 +24,7 @@ float get_phi(float px, float py) {
 void SDL::LST::readRawBuffEvalLST(const void* input_buffer){
 
     std::cout << "\nHere  in readRawBuffEvalLST" << std::endl;
+    bool prints = false;
     const double * test_buffer = reinterpret_cast<const double *>(input_buffer);
 
     // Get the info about how many phase2OTHits we have in this event
@@ -54,30 +55,30 @@ void SDL::LST::readRawBuffEvalLST(const void* input_buffer){
 
     ////////////////// Get the phase2OTHits stuff //////////////////
     int n_phase2OTHits = test_buffer[0]; itr_main++;
-    std::cout << "n_phase2OTHits:" <<  n_phase2OTHits << std::endl;
+    if (prints) { std::cout << "n_phase2OTHits:" <<  n_phase2OTHits << std::endl; };
 
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_phase2OTHits; i++){
         phase2OTHits_detId.push_back(int (test_buffer[i]));
-        std::cout << "The phase2OTHits_detId:" <<  int (test_buffer[i]) << std::endl;
+        if (prints) {std::cout << "The phase2OTHits_detId:" <<  int (test_buffer[i]) << std::endl;};
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_phase2OTHits; i++){
         phase2OTHits_x.push_back(test_buffer[i]);
-        std::cout << "The phase2OTHits_x: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The phase2OTHits_x: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_phase2OTHits; i++){
         phase2OTHits_y.push_back(test_buffer[i]);
-        std::cout << "The phase2OTHits_y: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The phase2OTHits_y: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_phase2OTHits; i++){
         phase2OTHits_z.push_back(test_buffer[i]);
-        std::cout << "The phase2OTHits_z: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The phase2OTHits_z: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
 
@@ -87,85 +88,85 @@ void SDL::LST::readRawBuffEvalLST(const void* input_buffer){
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
         pixelSeeds_px.push_back(test_buffer[i]);
-        std::cout << "The pixelSeeds_px: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The pixelSeeds_px: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
         pixelSeeds_py.push_back(test_buffer[i]);
-        std::cout << "The pixelSeeds_py: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The pixelSeeds_py: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
         pixelSeeds_pz.push_back(test_buffer[i]);
-        std::cout << "The pixelSeeds_pz: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The pixelSeeds_pz: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
         pixelSeeds_dxy.push_back(test_buffer[i]);
-        std::cout << "The pixelSeeds_dxy: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The pixelSeeds_dxy: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
         pixelSeeds_dz.push_back(test_buffer[i]);
-        std::cout << "The pixelSeeds_dz: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The pixelSeeds_dz: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
         pixelSeeds_ptErr.push_back(test_buffer[i]);
-        std::cout << "The pixelSeeds_ptErr: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The pixelSeeds_ptErr: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
         pixelSeeds_etaErr.push_back(test_buffer[i]);
-        std::cout << "The pixelSeeds_etaErr: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The pixelSeeds_etaErr: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
         pixelSeeds_stateTrajGlbX.push_back(test_buffer[i]);
-        std::cout << "The pixelSeeds_stateTrajGlbX: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The pixelSeeds_stateTrajGlbX: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
         pixelSeeds_stateTrajGlbY.push_back(test_buffer[i]);
-        std::cout << "The pixelSeeds_stateTrajGlbY: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The pixelSeeds_stateTrajGlbY: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
         pixelSeeds_stateTrajGlbZ.push_back(test_buffer[i]);
-        std::cout << "The pixelSeeds_stateTrajGlbZ: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The pixelSeeds_stateTrajGlbZ: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
         pixelSeeds_stateTrajGlbPx.push_back(test_buffer[i]);
-        std::cout << "The pixelSeeds_stateTrajGlbPx: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The pixelSeeds_stateTrajGlbPx: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
         pixelSeeds_stateTrajGlbPy.push_back(test_buffer[i]);
-        std::cout << "The pixelSeeds_stateTrajGlbPy: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The pixelSeeds_stateTrajGlbPy: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
         pixelSeeds_stateTrajGlbPz.push_back(test_buffer[i]);
-        std::cout << "The pixelSeeds_stateTrajGlbPz: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The pixelSeeds_stateTrajGlbPz: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
         pixelSeeds_q.push_back(test_buffer[i]);
-        std::cout << "The pixelSeeds_q: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The pixelSeeds_q: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
 
@@ -176,18 +177,18 @@ void SDL::LST::readRawBuffEvalLST(const void* input_buffer){
     itr_start = itr_main;
     for (int i=itr_start; i<itr_start+n_pixelSeeds; i++){
         hitIdx_sizes.push_back(test_buffer[i]);
-        std::cout << "The hitIdxShape: " <<  test_buffer[i] << std::endl;
+        if (prints) { std::cout << "The hitIdxShape: " <<  test_buffer[i] << std::endl; };
         itr_main++;
     }
 
     // Get the values
     for (const auto& hitIdx_size : hitIdx_sizes){
-        std::cout << "hitIdx_size: " << hitIdx_size << std::endl;
+        if (prints) { std::cout << "hitIdx_size: " << hitIdx_size << std::endl; };
         std::vector<int> tmp_vec;
         itr_start = itr_main;
         for (int i=itr_start; i<itr_start+hitIdx_size; i++){
             tmp_vec.push_back(test_buffer[i]);
-            std::cout << "    The hitIdx: " <<  test_buffer[i] << std::endl;
+            if (prints) { std::cout << "    The hitIdx: " <<  test_buffer[i] << std::endl; };
             itr_main++;
         }
         pixelSeeds_hitIdx.push_back(tmp_vec);
@@ -233,31 +234,31 @@ void SDL::LST::readRawBuffEvalLST(const void* input_buffer){
     // The trackCandidateType:
     out.push_back(out_seedIdx.size());
     for (int out_seedIdx_i : out_seedIdx) {
-        std::cout << "out_seedIdx " << out_seedIdx_i << std::endl;
+        if (prints) { std::cout << "out_seedIdx " << out_seedIdx_i << std::endl; };
         out.push_back(out_seedIdx_i);
     };
     // The trackCandidateType:
     out.push_back(out_trackCandidateType.size());
     for (short out_trackCandidateType_i : out_trackCandidateType) {
-        std::cout << "out_trackCandidateType " << out_trackCandidateType_i << std::endl;
+        if (prints) { std::cout << "out_trackCandidateType " << out_trackCandidateType_i << std::endl; };
         out.push_back(out_trackCandidateType_i);
     };
     // The len:
     out.push_back(out_len.size());
     for (unsigned int out_len_i: out_len) {
-        std::cout << "out_len " <<  out_len_i << std::endl;
+        if (prints) { std::cout << "out_len " <<  out_len_i << std::endl; };
         out.push_back(out_len_i);
     };
     // The hits, these are nested, so need all shape info:
     out.push_back(out_hits.size());
     for (const auto& out_hits_i : out_hits){
-        std::cout << "out_hits_i_len " <<  out_hits_i.size() << std::endl;
+        if (prints) { std::cout << "out_hits_i_len " <<  out_hits_i.size() << std::endl; };
         out.push_back(out_hits_i.size());
     };
     for (const auto& out_hits_i : out_hits){
-        std::cout << "New" <<  std::endl;
+        if (prints) { std::cout << "New" <<  std::endl; };
         for (const auto& out_hits_ij: out_hits_i) {
-            std::cout << "out_hits_ij " <<  out_hits_ij << std::endl;
+            if (prints) { std::cout << "out_hits_ij " <<  out_hits_ij << std::endl; };
             out.push_back(out_hits_ij);
         };
     };
@@ -265,7 +266,7 @@ void SDL::LST::readRawBuffEvalLST(const void* input_buffer){
 
     // Get sizes of the four outputs
     // The vector is all int, so just need to know len and size of an int
-    std::cout << "sizeof(int): " << sizeof(int) << std::endl;
+    if (prints) { std::cout << "sizeof(int): " << sizeof(int) << std::endl; };
     SDL::LST::lst_outsize = out.size() * sizeof(int);
 
     return;
