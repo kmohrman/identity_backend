@@ -16,7 +16,7 @@ float get_eta(float px, float py, float pz) {
 }
 
 float get_phi(float px, float py) {
-    return atan2(px,py);
+    return atan2(py,px);
 }
 
 
